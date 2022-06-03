@@ -22,9 +22,12 @@ class BuildCache extends Command
     {
         Cache::store(MarkdownBlog::cacheStore())->forget('mdblog.posts');
         Cache::store(MarkdownBlog::cacheStore())->forget('mdblog.categories');
+        Cache::store(MarkdownBlog::cacheStore())->forget('mdblog.tags');
 
         // Don't care about the data, but this triggers a cache rebuild
-        MarkdownBlog::posts();
+        \Aelora\MarkdownBlog\Models\Post::first();
+        \Aelora\MarkdownBlog\Models\Category::first();
+        \Aelora\MarkdownBlog\Models\Tag::first();
 
         return self::SUCCESS;
     }

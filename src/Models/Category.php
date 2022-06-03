@@ -26,13 +26,6 @@ class Category extends Model
 
     public function getRows()
     {
-
-        // return [
-        //     ['a' => 1, 'b' => 2],
-        //     ['a' => 3, 'b' => 4],
-        // ];
-
-        Cache::store(MarkdownBlog::cacheStore())->forget('mdblog.categories');
         return Cache::store(MarkdownBlog::cacheStore())->rememberForever('mdblog.categories', function () {
             $allFiles = File::allFiles(storage_path('mdblog'));
             $cats = [];
@@ -63,9 +56,13 @@ class Category extends Model
         });
     }
 
-    public function posts(): Collection
+    public function scopeSlug($qry, $slug)
     {
-        ray('hi');
-        return collect();
+        return $qry->where('slug', Str::slug($slug));
+    }
+
+    public function posts()
+    {
+        return Post::category($this->slug);
     }
 }

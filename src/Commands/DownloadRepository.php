@@ -57,6 +57,7 @@ class DownloadRepository extends Command
                 $storage->put($fullPath, $contents);
             }
         }
+        $za->close();
         $storage->delete(storage_path('mdblog/.gitdownload.zip'));
 
         Artisan::call('mdblog:cache');

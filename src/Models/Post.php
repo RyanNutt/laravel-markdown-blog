@@ -142,6 +142,12 @@ class Post extends Model implements JsonSerializable
         return $parsedown->text($this->content());
     }
 
+    public function rendered(): string
+    {
+        $html = $this->html();
+        return MarkdownBlog::bladeCompile($html, ['post' => $this]);
+    }
+
     /**
      * Loads the contents of the markdown file
      */

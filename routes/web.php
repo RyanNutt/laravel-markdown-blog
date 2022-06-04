@@ -18,5 +18,3 @@ if (!empty($posts)) {
         Route::get($post->permalink, config('mdblog.controllers.post'));
     }
 }
-
-ray(Route::getRoutes())->blue();

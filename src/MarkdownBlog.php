@@ -50,4 +50,16 @@ class MarkdownBlog
             ->where('slug', '.*')
             ->name('mdblog.post');
     }
+
+    /**
+     * Returns the controller for a single post. Used when there is already
+     * a catch all route in the app and it needs to be able to hand off
+     * to the post controller. 
+     */
+    public function postController()
+    {
+        $controllerInfo = explode('@', config('mdblog.controllers.post'));
+        ray($controllerInfo);
+        return call_user_func([new $controllerInfo[0], $controllerInfo[1]]);
+    }
 }

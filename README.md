@@ -21,12 +21,25 @@ You can publish the config file with:
 php artisan vendor:publish --tag="laravel-markdown-blog-config"
 ```
 
-This is the contents of the published config file:
+Config settings
 
-```php
-return [
-];
-```
+|Setting|.env Variable|Description|
+|:---|:---|:---|
+|cache|MDBLOG_CACHE|Name of the cache driver to use. `default` will use whatever is set as default in `config/cache.php`, or you can use any of the named drivers.|
+|controllers.blog||
+|controllers.categories||
+|controllers.post||
+|controllers.tags||
+|permalinks.blog|MDBLOG_PERMALINK_BLOG|Base permalink for the blog index page|
+|permalinks.categories|MDBLOG_PERMALINK_CATEGORY|Base permalink for the category pages|
+|permalinks.tags|MDBLOG_PERMALINK_TAG|Base permalink for the tag pages|
+|per_page|MDBLOG_PER_PAGE|Number of blog posts per index page|
+|public_path|MDBLOG_PUBLIC_PATH|Path where image files are stored so they can be accessed on public site. Relative to `public_path()`. This should not be a folder that holds anything other that files download from the respository, especially if you're using `public_path_delete`|
+|public_path_delete|MDBLOG_DELETE_PUBLIC_PATH|If true, the `public_path` is cleared of all files when a fresh copy of the repository is downloaded.|
+|repository.branch|MDBLOG_BRANCH|Which git branch to pull from. This is also the only branch that will trigger updates if you're using webhooks|
+|repository.key|MDBLOG_KEY|Personal access token for the repository. Optional for public repositories. Required for private repos or if you're using webhooks.|
+|repository.type|MDBLOG_TYPE|Either github or gitlab. The package tries to guess from the url, but in case you're using a custom domain you can set it manually.  Only github is currently supported.|
+|repository.url|MDBLOG_REPO|The Url of the repository to pull files from|
 
 Optionally, you can publish the views using
 

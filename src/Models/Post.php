@@ -238,4 +238,9 @@ class Post extends Model implements JsonSerializable
 
         File::put($this->fullpath, $fullContent);
     }
+
+    public function getUrlAttribute()
+    {
+        return url($this->permalink);
+    }
 }

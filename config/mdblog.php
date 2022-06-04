@@ -16,6 +16,27 @@ return [
         'key' => env('MDBLOG_KEY', ''),
     ],
 
+    'permalinks' => [
+        // All blog pages
+        'blog' => env('MDBLOG_PERMALINK_BLOG', 'posts'),
+
+        // Only pages within a specified category
+        'categories' => env('MDBLOG_PERMALINK_CATEGORY', 'posts/cat/{slug}'),
+
+        // Only pages with a specified tag
+        'tags' => env('MDBLOG_PERMALINK_TAG', 'posts/tag/{slug}'),
+    ],
+
+    'controllers' => [
+        'blog' => '\Aelora\MarkdownBlog\Http\Controllers\BlogController@index',
+        'category' => '\Aelora\MarkdownBlog\Http\Controllers\CategoryController@index',
+        'tag' => '\Aelora\MarkdownBlog\Http\Controllers\TagController@index',
+        'post' => '\Aelora\MarkdownBlog\Http\Controllers\PostController@index',
+    ],
+
+    // Number of posts shown per page on blog
+    'per_page' => env('MDBLOG_PER_PAGE', 10),
+
     'cache' => env('MDBLOG_CACHE', 'default'),
 
     // Whether the default route is loaded. It should be unless you're already loading 
@@ -28,6 +49,6 @@ return [
     'public_path' => env('MDBLOG_PUBLIC_PATH', 'blog'),
 
     // Delete files from the public path when a new copy of the repo is downloaded. Be 
-    // careful with this if publicpath is a folder where other files are stored.
+    // careful with this if public_path is a folder where other files are stored.
     'delete_public_path' => env('MDBLOG_DELETE_PUBLIC_PATH', true),
 ];

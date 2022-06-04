@@ -11,6 +11,7 @@ use JsonSerializable;
 use Spatie\YamlFrontMatter\YamlFrontMatter;
 use Str;
 use Symfony\Component\Yaml\Yaml;
+use Illuminate\Database\Eloquent\Builder;
 
 class Post extends Model implements JsonSerializable
 {
@@ -22,6 +23,14 @@ class Post extends Model implements JsonSerializable
         'categories' => 'array',
         'post' => 'boolean',
     ];
+
+    protected static function booted()
+    {
+        static::addGlobalScope('published', function (Builder $builder) {
+            $builder->where('published', true);
+        });
+    }
+
     public function getRows()
     {
         return Cache::store(MarkdownBlog::cacheStore())->rememberForever('mdblog.posts', function () {
@@ -74,7 +83,7 @@ class Post extends Model implements JsonSerializable
         $obj->filename = basename($file);
         $obj->name = pathinfo($file, PATHINFO_FILENAME);
         $obj->fullpath = $fullPath;
-        if (!empty($o->date)) {
+        if ($o->matter('date') != '') {
             $obj->date = Carbon::parse($o->date);
         } else if (preg_match('/(\/|^)(\d{4}-\d{2}-\d{2})/', $file, $matches)) {
             $obj->date = Carbon::parse($matches[2]);
@@ -92,7 +101,7 @@ class Post extends Model implements JsonSerializable
             $obj->permalink = $o->permalink;
         } else {
             // Path relative to mdblog root and filename without date and without extension
-            $obj->permalink = Str::cleanPath(Str::contains($file, '/') ? Str::beforeLast($file, '/') . '/' . $obj->name : $obj->name);
+            $obj->permalink = MarkdownBlog::cleanPath(Str::contains($file, '/') ? Str::beforeLast($file, '/') . '/' . $obj->name : $obj->name);
         }
 
         // Needs to be relative to root
@@ -101,6 +110,12 @@ class Post extends Model implements JsonSerializable
         $isPost = $o->matter('post', true);
         $obj->post = $isPost === true || Str::toLower($isPost) == 'true' || $isPost == '1';
 
+        $obj->published = true;
+        if (array_key_exists('draft', $o->matter())) {
+            $obj->published = false;
+        } else if ($obj->date > Carbon::now()) {
+            $obj->published = false;
+        }
         return $obj;
     }
 
@@ -176,6 +191,7 @@ class Post extends Model implements JsonSerializable
             'name' => $this->name,
             'fullpath' => $this->fullpath,
             'post' => (bool)$this->post,
+            'published' => (bool)$this->published,
         ];
     }
 
@@ -232,6 +248,17 @@ class Post extends Model implements JsonSerializable
     {
         $qry->where('tags', 'like', '%' . Str::slug($tag) . '%');
     }
+
+    // public function newQuery($excludeDeleted = true)
+    // {
+    //     $builder = parent::newQuery($excludeDeleted);
+    //     $builder->where('published', true);
+    //     return $builder;
+    //     // if (Config::get('hide_banned_users', true) !== false) {
+    //     //     $builder->where('banned', '=', '0');
+    //     // }
+    //     // return $builder;
+    // }
 
     public function getYearAttribute()
     {

@@ -2,14 +2,7 @@
 
 namespace Aelora\MarkdownBlog;
 
-use Aelora\MarkdownBlog\Models\Category;
-use Aelora\MarkdownBlog\Models\Post;
-use Aelora\MarkdownBlog\Models\Posts;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Route;
-
+use Str;
 
 class MarkdownBlog
 {
@@ -26,30 +19,7 @@ class MarkdownBlog
         return $out;
     }
 
-    /**
-     * Registers routes, should go in /routes/web.php, at the end
-     * if using the catch-all route. 
-     */
-    public function routes(bool $catchAll = true)
-    {
 
-        Route::get(config('mdblog.permalinks.blog'), config('mdblog.controllers.blog'))
-            ->name('mdblog.blog');
-        Route::get(config('mdblog.permalinks.categories'), config('mdblog.controllers.category'))
-            ->name('mdblog.category');
-        Route::get(config('mdblog.permalinks.tags'), config('mdblog.controllers.tag'))
-            ->name('mdblog.tag');
-        if ($catchAll) {
-            $this->routeCatchAll();
-        }
-    }
-
-    public function routeCatchAll()
-    {
-        Route::get('/{slug}', config('mdblog.controllers.post'))
-            ->where('slug', '.*')
-            ->name('mdblog.post');
-    }
 
     /**
      * Returns the controller for a single post. Used when there is already
@@ -59,7 +29,17 @@ class MarkdownBlog
     public function postController()
     {
         $controllerInfo = explode('@', config('mdblog.controllers.post'));
-        ray($controllerInfo);
         return call_user_func([new $controllerInfo[0], $controllerInfo[1]]);
+    }
+
+    public function cleanPath(string $path, string $separator = '/')
+    {
+        $sections = preg_split('#[\\/]#', $path);
+        $sections = array_map(function ($section) {
+            $section = str_replace(['&', '@'], ['and', 'at'], $section);
+            $section = preg_replace('/\s+?/', ' ', $section);
+            return Str::slug(trim($section));
+        }, $sections);
+        return implode($separator, $sections);
     }
 }

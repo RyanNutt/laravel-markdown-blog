@@ -18,6 +18,7 @@ class MarkdownBlogServiceProvider extends PackageServiceProvider
         $package
             ->name('laravel-markdown-blog')
             ->hasConfigFile('mdblog')
+            ->hasRoutes(['web'])
             ->hasCommand(Commands\BuildCache::class)
             ->hasCommand(Commands\DownloadRepository::class)
             ->hasViews();
@@ -26,14 +27,5 @@ class MarkdownBlogServiceProvider extends PackageServiceProvider
     public function boot()
     {
         parent::boot();
-        Str::macro('cleanPath', function (string $path, string $separator = '/') {
-            $sections = preg_split('#[\\/]#', $path);
-            $sections = array_map(function ($section) {
-                $section = str_replace(['&', '@'], ['and', 'at'], $section);
-                $section = preg_replace('/\s+?/', ' ', $section);
-                return Str::slug(trim($section));
-            }, $sections);
-            return implode($separator, $sections);
-        });
     }
 }

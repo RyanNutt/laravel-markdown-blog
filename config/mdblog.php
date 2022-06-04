@@ -18,13 +18,13 @@ return [
 
     'permalinks' => [
         // All blog pages
-        'blog' => env('MDBLOG_PERMALINK_BLOG', 'posts'),
+        'blog' => env('MDBLOG_PERMALINK_BLOG', '/posts'),
 
         // Only pages within a specified category
-        'categories' => env('MDBLOG_PERMALINK_CATEGORY', 'posts/cat/{slug}'),
+        'categories' => env('MDBLOG_PERMALINK_CATEGORY', '/posts/cat/{slug}'),
 
         // Only pages with a specified tag
-        'tags' => env('MDBLOG_PERMALINK_TAG', 'posts/tag/{slug}'),
+        'tags' => env('MDBLOG_PERMALINK_TAG', '/posts/tag/{slug}'),
     ],
 
     'controllers' => [

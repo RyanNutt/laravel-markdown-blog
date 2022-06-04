@@ -10,9 +10,9 @@ if (config('mdblog.route')) {
     });
 }
 
-Route::get('/' . config('mdblog.permalinks.blog'), config('mdblog.controllers.blog'))
+Route::get(config('mdblog.permalinks.blog'), config('mdblog.controllers.blog'))
     ->name('mdblog.blog');
-Route::get('/' . config('mdblog.permalinks.categories'), config('mdblog.controllers.category'))
+Route::get(config('mdblog.permalinks.categories'), config('mdblog.controllers.category'))
     ->name('mdblog.category');
-Route::get('/' . config('mdblog.permalinks.tags'), config('mdblog.controllers.tag'))
+Route::get(config('mdblog.permalinks.tags'), config('mdblog.controllers.tag'))
     ->name('mdblog.tag');

@@ -2,14 +2,15 @@
 
 namespace Aelora\MarkdownBlog\Models;
 
+use Aelora\MarkdownBlog\Facades\MarkdownBlog;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
-use Spatie\YamlFrontMatter\YamlFrontMatter;
-use Str;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
-use Aelora\MarkdownBlog\Facades\MarkdownBlog;
 use JsonSerializable;
+use Spatie\YamlFrontMatter\YamlFrontMatter;
+use Str;
+use Symfony\Component\Yaml\Yaml;
 
 class Post extends Model implements JsonSerializable
 {
@@ -28,8 +29,12 @@ class Post extends Model implements JsonSerializable
             $files = [];
             if (!empty($allFiles)) {
                 foreach ($allFiles as $file) {
-                    $filePath = preg_replace('#^' . storage_path('mdblog') . '#', '', $file->getPathname());
-                    $files[] = Post::fromFile($filePath)->toArray();
+                    $lcFilename = $file->getFilename();
+                    if (Str::endsWith($lcFilename, ['.md', '.markdown', '.html', '.html'])) {
+                        // Only want markdown or html files
+                        $filePath = preg_replace('#^' . storage_path('mdblog') . '#', '', $file->getPathname());
+                        $files[] = Post::fromFile($filePath)->toArray();
+                    }
                 }
             }
             return $files;
@@ -110,13 +115,22 @@ class Post extends Model implements JsonSerializable
     /**
      * Loads the contents of the markdown file
      */
-    public function contents(): ?string
+    public function content(): ?string
     {
         if (!file_exists($this->fullpath)) {
             return '';
         }
         $o = YamlFrontMatter::parse(file_get_contents($this->fullpath));
         return trim($o->body());
+    }
+
+    public function frontMatter()
+    {
+        if (!file_exists($this->fullpath)) {
+            return '';
+        }
+        $o = YamlFrontMatter::parse(file_get_contents($this->fullpath));
+        return $o->matter();
     }
 
     public function jsonSerialize(): mixed
@@ -207,5 +221,21 @@ class Post extends Model implements JsonSerializable
     public function getYearAttribute()
     {
         return $this->date->year;
+    }
+
+    /**
+     * Replaces the content of the markdown, leaving the front matter
+     * in place. 
+     */
+    public function updateContent(string $newContent)
+    {
+        if ($newContent == $this->content()) {
+            return;
+        }
+
+        $frontMatterString = empty($this->frontMatter()) ? '' : Yaml::dump($this->frontMatter());
+        $fullContent = "---\n" . $frontMatterString . "---\n" . $newContent;
+
+        File::put($this->fullpath, $fullContent);
     }
 }

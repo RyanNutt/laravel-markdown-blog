@@ -6,7 +6,7 @@ use Illuminate\Console\Command;
 use Str;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Http;
-
+use Illuminate\Support\Facades\Artisan;
 
 class DownloadRepository extends Command
 {
@@ -58,6 +58,9 @@ class DownloadRepository extends Command
             }
         }
         $storage->delete(storage_path('mdblog/.gitdownload.zip'));
+
+        Artisan::call('mdblog:cache');
+
         return self::SUCCESS;
     }
 }

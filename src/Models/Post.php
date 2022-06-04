@@ -105,11 +105,26 @@ class Post extends Model implements JsonSerializable
     }
 
     /**
+     * Tries to load a post from the current request
+     */
+    public static function current()
+    {
+        $permalink = request()->getPathInfo();
+        return self::permalink($permalink)->first();
+    }
+
+    /**
      * Load the model from an array. This will be the same
      * array as when it's toJson()d.
      */
     public static function fromArray(array $data): self
     {
+    }
+
+    public function html(): string
+    {
+        $parsedown = new \Parsedown();
+        return $parsedown->text($this->content());
     }
 
     /**

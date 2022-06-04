@@ -20,7 +20,6 @@ class MarkdownBlogServiceProvider extends PackageServiceProvider
             ->hasConfigFile('mdblog')
             ->hasCommand(Commands\BuildCache::class)
             ->hasCommand(Commands\DownloadRepository::class)
-            ->hasRoutes(['web'])
             ->hasViews();
     }
 

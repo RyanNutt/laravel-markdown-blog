@@ -8,6 +8,8 @@ use Aelora\MarkdownBlog\Models\Posts;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Route;
+
 
 class MarkdownBlog
 {
@@ -24,18 +26,28 @@ class MarkdownBlog
         return $out;
     }
 
-    public function posts(): Posts
+    /**
+     * Registers routes, should go in /routes/web.php, at the end
+     * if using the catch-all route. 
+     */
+    public function routes(bool $catchAll = true)
     {
-        return (new \Aelora\MarkdownBlog\Models\Posts());
+
+        Route::get(config('mdblog.permalinks.blog'), config('mdblog.controllers.blog'))
+            ->name('mdblog.blog');
+        Route::get(config('mdblog.permalinks.categories'), config('mdblog.controllers.category'))
+            ->name('mdblog.category');
+        Route::get(config('mdblog.permalinks.tags'), config('mdblog.controllers.tag'))
+            ->name('mdblog.tag');
+        if ($catchAll) {
+            $this->routeCatchAll();
+        }
     }
 
-    public function post(string $permalink): ?Post
+    public function routeCatchAll()
     {
-        return $this->posts()->where('permalink', $permalink)->first();
-    }
-
-    public function categories(): Collection
-    {
-        return Category::all();
+        Route::get('/{slug}', config('mdblog.controllers.post'))
+            ->where('slug', '.*')
+            ->name('mdblog.post');
     }
 }

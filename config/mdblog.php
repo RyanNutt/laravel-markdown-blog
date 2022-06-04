@@ -39,11 +39,6 @@ return [
 
     'cache' => env('MDBLOG_CACHE', 'default'),
 
-    // Whether the default route is loaded. It should be unless you're already loading 
-    // a default route, in which case that controller should check for a post before
-    // throwing a 404. 
-    'route' => env('MDBLOG_ROUTE', false),
-
     // Path to store images that are downloaded from the git repository so that they
     // can be publicly accessible. This is relative to the public_path of the application.
     'public_path' => env('MDBLOG_PUBLIC_PATH', 'blog'),

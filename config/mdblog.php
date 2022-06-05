@@ -34,6 +34,11 @@ return [
         'post' => '\Aelora\MarkdownBlog\Http\Controllers\PostController@index',
     ],
 
+    'webhook' => [
+        'key' => env('MDBLOG_WEBHOOK_KEY', 'change_this_to_something_secure'),
+        'route' => env('MDBLOG_WEBHOOK_ROUTE', '/mdblogwebhook'),
+    ],
+
     // Number of posts shown per page on blog
     'per_page' => env('MDBLOG_PER_PAGE', 10),
 

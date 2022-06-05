@@ -71,8 +71,8 @@ class Post extends Model implements JsonSerializable
         // to an array when needed. We're storing the slug, not the actual
         // name. If name is needed later it'll get pulled from the Category
         // model using the slug. 
-        $o->categories = collect($o->categories)->toArray();
-        $o->tags = collect($o->tags)->toArray();
+        $o->categories = collect($o->categories ?? $o->category)->toArray();
+        $o->tags = collect($o->tags ?? $o->tag)->toArray();
         $obj->categories = json_encode(array_map(function ($cat) {
             return Str::slug($cat);
         }, $o->categories ?? []));

@@ -30,28 +30,26 @@ class Category extends Model
             $allFiles = File::allFiles(storage_path('mdblog'));
             $cats = [];
             $done = [];
-            if (!empty($allFiles)) {
-                foreach ($allFiles as $file) {
-                    $yaml = YamlFrontMatter::parse($file->getContents());
-                    $catList = $yaml->matter('categories');
-                    if (!empty($catList)) {
-                        foreach ($catList as $cat) {
-                            $cat = trim($cat);
-                            if (!empty($cat)) {
-                                $slug = Str::slug($cat);
-                                if (!in_array($slug, $done)) {
-                                    $cats[] = [
-                                        'id' => $slug,
-                                        'name' => $cat,
-                                        'slug' => $slug,
-                                    ];
-                                    $done[] = $slug;
-                                }
+            foreach (Post::all() as $post) {
+                $catList = $post->categories;
+                if (!empty($catList)) {
+                    foreach ($catList as $cat) {
+                        $cat = trim($cat);
+                        if (!empty($cat)) {
+                            $slug = Str::slug($cat);
+                            if (!in_array($slug, $done)) {
+                                $cats[] = [
+                                    'id' => $slug,
+                                    'name' => $cat,
+                                    'slug' => $slug,
+                                ];
+                                $done[] = $slug;
                             }
                         }
                     }
                 }
             }
+
             return $cats;
         });
     }
@@ -64,5 +62,9 @@ class Category extends Model
     public function posts()
     {
         return Post::category($this->slug);
+    }
+    public function url(): string
+    {
+        return url(preg_replace('/{(.+?)}/', $this->slug, config('mdblog.permalinks.categories')));
     }
 }

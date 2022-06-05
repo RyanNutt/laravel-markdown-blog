@@ -71,6 +71,8 @@ class Post extends Model implements JsonSerializable
         // to an array when needed. We're storing the slug, not the actual
         // name. If name is needed later it'll get pulled from the Category
         // model using the slug. 
+        $o->categories = collect($o->categories)->toArray();
+        $o->tags = collect($o->tags)->toArray();
         $obj->categories = json_encode(array_map(function ($cat) {
             return Str::slug($cat);
         }, $o->categories ?? []));
@@ -290,5 +292,35 @@ class Post extends Model implements JsonSerializable
     public function getUrlAttribute()
     {
         return url($this->permalink);
+    }
+
+    /**
+     * Returns the primary category for this post. The primary is the first
+     * one listed in frontmatter. 
+     * 
+     * Returns null if there isn't a category listed. 
+     */
+    public function primaryCategory(): ?Category
+    {
+        $cats = $this->categories;
+        if (!empty($cats[0])) {
+            return Category::where('slug', $cats[0])->first();
+        }
+        return null;
+    }
+
+    /**
+     * Returns the primary tag for this post. The primary is the first
+     * tag listed in frontmatter.
+     * 
+     * Returns null if there isn't a tag specified in front matter. 
+     */
+    public function primaryTag(): ?Tag
+    {
+        $tags = $this->tags;
+        if (!empty($tags[0])) {
+            return Tag::where('slug', $tags[0])->first();
+        }
+        return null;
     }
 }

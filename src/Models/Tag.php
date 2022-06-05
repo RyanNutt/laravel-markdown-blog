@@ -30,23 +30,20 @@ class Tag extends Model
             $allFiles = File::allFiles(storage_path('mdblog'));
             $tags = [];
             $done = [];
-            if (!empty($allFiles)) {
-                foreach ($allFiles as $file) {
-                    $yaml = YamlFrontMatter::parse($file->getContents());
-                    $tagList = $yaml->matter('tags');
-                    if (!empty($tagList)) {
-                        foreach ($tagList as $tag) {
-                            $tag = trim($tag);
-                            if (!empty($tag)) {
-                                $slug = Str::slug($tag);
-                                if (!in_array($slug, $done)) {
-                                    $tags[] = [
-                                        'id' => $slug,
-                                        'name' => $tag,
-                                        'slug' => $slug,
-                                    ];
-                                    $done[] = $slug;
-                                }
+            foreach (Post::all() as $post) {
+                $tagList = $post->tags;
+                if (!empty($tagList)) {
+                    foreach ($tagList as $tag) {
+                        $tag = trim($tag);
+                        if (!empty($tag)) {
+                            $slug = Str::slug($tag);
+                            if (!in_array($slug, $done)) {
+                                $tags[] = [
+                                    'id' => $slug,
+                                    'name' => $tag,
+                                    'slug' => $slug,
+                                ];
+                                $done[] = $slug;
                             }
                         }
                     }
@@ -64,5 +61,10 @@ class Tag extends Model
     public function posts()
     {
         return Post::tag($this->slug);
+    }
+
+    public function url(): string
+    {
+        return url(preg_replace('/{(.+?)}/', $this->slug, config('mdblog.permalinks.tags')));
     }
 }

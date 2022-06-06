@@ -13,7 +13,7 @@ class TestCase extends Orchestra
         parent::setUp();
 
         Factory::guessFactoryNamesUsing(
-            fn (string $modelName) => 'Aelora\\MarkdownBlog\\Database\\Factories\\'.class_basename($modelName).'Factory'
+            fn (string $modelName) => 'Aelora\\MarkdownBlog\\Database\\Factories\\' . class_basename($modelName) . 'Factory'
         );
     }
 
@@ -26,10 +26,15 @@ class TestCase extends Orchestra
 
     public function getEnvironmentSetUp($app)
     {
+        // It has to be there for the service provider to load?
+        // if (!is_dir(storage_path('mdblog'))) {
+        //     mkdir(storage_path('mdblog'));
+        // }
+
         config()->set('database.default', 'testing');
 
         /*
-        $migration = include __DIR__.'/../database/migrations/create_laravel-markdown-blog_table.php.stub';
+        $migration = include __DIR__.'/../database/migrations/create_skeleton_table.php.stub';
         $migration->up();
         */
     }

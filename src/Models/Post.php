@@ -33,6 +33,11 @@ class Post extends Model implements JsonSerializable
 
     public function getRows()
     {
+        if (!file_exists(storage_path('mdblog'))) {
+            // If the storage folder isn't there, can't do anything with this
+            // so just bail. 
+            return [];
+        }
         return Cache::store(MarkdownBlog::cacheStore())->rememberForever('mdblog.posts', function () {
             $allFiles = File::allFiles(storage_path('mdblog'));
             $files = [];
@@ -41,8 +46,8 @@ class Post extends Model implements JsonSerializable
                     $lcFilename = $file->getFilename();
                     if (Str::endsWith($lcFilename, ['.md', '.markdown', '.html', '.html'])) {
                         // Only want markdown or html files
-                        $filePath = preg_replace('#^' . storage_path('mdblog') . '#', '', $file->getPathname());
-                        $files[] = Post::fromFile($filePath)->toArray();
+                        //$filePath = preg_replace('#^' . storage_path('mdblog') . '#', '', $file->getPathname());
+                        $files[] = Post::fromFile($file->getPathname())->toArray();
                     }
                 }
             }
@@ -60,10 +65,9 @@ class Post extends Model implements JsonSerializable
      */
     public static function fromFile(string $file): self
     {
-        $fullPath = storage_path('mdblog' . $file);
-        throw_if(!file_exists($fullPath), new \Exception('File does not exist'));
+        throw_if(!file_exists($file), new \Exception('File does not exist'));
 
-        $o = YamlFrontMatter::parse(file_get_contents($fullPath));
+        $o = YamlFrontMatter::parse(file_get_contents($file));
         $obj = new self();
         $obj->title = $o->title;
 
@@ -84,7 +88,7 @@ class Post extends Model implements JsonSerializable
         $obj->filepath = $file;
         $obj->filename = basename($file);
         $obj->name = pathinfo($file, PATHINFO_FILENAME);
-        $obj->fullpath = $fullPath;
+        $obj->fullpath = $file;
         if ($o->matter('date') != '') {
             $obj->date = Carbon::parse($o->date);
         } else if (preg_match('/(\/|^)(\d{4}-\d{2}-\d{2})/', $file, $matches)) {
@@ -108,6 +112,11 @@ class Post extends Model implements JsonSerializable
 
         // Needs to be relative to root
         $obj->permalink = Str::start($obj->permalink, '/');
+
+        // Optionally add / if not there
+        if (config('mdblog.permalinks.trailing_slash')) {
+            $obj->permalink = Str::finish($obj->permalink, '/');
+        }
 
         $isPost = $o->matter('post', true);
         $obj->post = $isPost === true || Str::toLower($isPost) == 'true' || $isPost == '1';

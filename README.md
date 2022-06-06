@@ -1,4 +1,6 @@
 
+**Note:** This is still under active development and not ready for use on a live site. 
+
 # Laravel Markdown Blog Package
 
 Are you both a Laravel and Jekyll fan? Do you want to write your blog in Markdown?

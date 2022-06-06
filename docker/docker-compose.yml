@@ -1,0 +1,18 @@
+version: '3.5'
+
+services:
+  laravel:
+    container_name: MarkdownBlog
+    image: aelora/laravel-test:8.1-9
+    volumes:
+      - ../:/opt/markdown-blog/
+      - $PWD/.env.dev:/opt/laravel/.env.dev
+    ports:
+      - "80:80"
+      - "22:22"
+    dns:
+      - 8.8.4.4
+      - 1.0.0.1
+    environment:
+      - APP_ENV=dev
+    command: /bin/bash /opt/markdown-blog/docker/start.sh

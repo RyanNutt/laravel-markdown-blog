@@ -18,3 +18,4 @@ test('Leading Slash/Trailing', function () {
     $p = Post::fromFile(__DIR__ . '/fixtures/permalinks/definedwithoutslash.md');
     expect($p->permalink)->toBe('/this-is-the-permalink/');
 });
+

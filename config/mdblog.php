@@ -50,7 +50,7 @@ return [
 
     // Path to store images that are downloaded from the git repository so that they
     // can be publicly accessible. This is relative to the public_path of the application.
-    'public_path' => env('MDBLOG_PUBLIC_PATH', 'blog'),
+    'public_path' => env('MDBLOG_PUBLIC_PATH', 'assets/blog'),
 
     // Delete files from the public path when a new copy of the repo is downloaded. Be 
     // careful with this if public_path is a folder where other files are stored.

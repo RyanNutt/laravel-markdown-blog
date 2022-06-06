@@ -24,6 +24,8 @@ class Post extends Model implements JsonSerializable
         'post' => 'boolean',
     ];
 
+    private $frontMatter = null;
+
     protected static function booted()
     {
         static::addGlobalScope('published', function (Builder $builder) {
@@ -70,6 +72,7 @@ class Post extends Model implements JsonSerializable
         $o = YamlFrontMatter::parse(file_get_contents($file));
         $obj = new self();
         $obj->title = $o->title;
+        $obj->frontMatter = $o->matter();
 
         // Need to encode these to prevent a PHP warning, casting pulls it back
         // to an array when needed. We're storing the slug, not the actual
@@ -108,15 +111,14 @@ class Post extends Model implements JsonSerializable
         } else {
             // Path relative to mdblog root and filename without date and without extension
             $obj->permalink = MarkdownBlog::cleanPath(Str::contains($file, '/') ? Str::beforeLast($file, '/') . '/' . $obj->name : $obj->name);
+            $obj->permalink = preg_replace('#^' . storage_path('mdblog') . '#', '', $obj->permalink);
         }
 
         // Needs to be relative to root
         $obj->permalink = Str::start($obj->permalink, '/');
 
-        // Optionally add / if not there
-        if (config('mdblog.permalinks.trailing_slash')) {
-            $obj->permalink = Str::finish($obj->permalink, '/');
-        }
+        // Remove trailing slash, even if it's explicitly defined
+        $obj->permalink = preg_replace('#/{1}$#', '', $obj->permalink);
 
         $isPost = $o->matter('post', true);
         $obj->post = $isPost === true || Str::toLower($isPost) == 'true' || $isPost == '1';
@@ -136,6 +138,7 @@ class Post extends Model implements JsonSerializable
     public static function current()
     {
         $permalink = request()->getPathInfo();
+        ray($permalink)->blue();
         return self::permalink($permalink)->first();
     }
 
@@ -173,10 +176,14 @@ class Post extends Model implements JsonSerializable
 
     public function frontMatter()
     {
+        if (is_array($this->frontMatter)) {
+            return $this->frontMatter;
+        }
         if (!file_exists($this->fullpath)) {
-            return '';
+            return [];
         }
         $o = YamlFrontMatter::parse(file_get_contents($this->fullpath));
+        $this->frontMatter = $o->matter();
         return $o->matter();
     }
 
@@ -286,19 +293,27 @@ class Post extends Model implements JsonSerializable
      * Replaces the content of the markdown, leaving the front matter
      * in place. 
      */
-    public function updateContent(string $newContent)
+    public function updateContent(string $newContent, $extraMatter = [])
     {
-        if ($newContent == $this->content()) {
+        if ($newContent == $this->content() && empty($extraMatter)) {
             return;
         }
 
-        $frontMatterString = empty($this->frontMatter()) ? '' : Yaml::dump($this->frontMatter());
+        $matter = array_merge($this->frontMatter(), $extraMatter);
+
+        $frontMatterString = empty($matter) ? '' : Yaml::dump($matter);
         $fullContent = "---\n" . $frontMatterString . "---\n" . $newContent;
 
         File::put($this->fullpath, $fullContent);
     }
 
     public function getUrlAttribute()
+    {
+        ray($this->permalink)->orange();
+        return url($this->permalink);
+    }
+
+    public function url(): string
     {
         return url($this->permalink);
     }

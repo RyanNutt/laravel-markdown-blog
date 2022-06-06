@@ -1,7 +1,7 @@
 {{-- View for a blog index page 
 
 $posts variable is a paginator object. --}}
-
+@ray($posts);
 <!DOCTYPE html>
 <html>
 

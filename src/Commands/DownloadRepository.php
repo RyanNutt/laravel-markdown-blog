@@ -16,6 +16,10 @@ class DownloadRepository extends Command
 
     public function handle(): int
     {
+        if (empty(config('mdblog.repository.url'))) {
+            $this->error('Markdown blog repository not set');
+            return 1;
+        }
 
         $storage = Storage::build(['driver' => 'local', 'root' => '/']);
         $storage->deleteDirectory(storage_path('mdblog'));

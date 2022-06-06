@@ -14,7 +14,6 @@ class PostController extends Controller
     public function index()
     {
         $post = Post::current();
-        ray($post)->red();
         abort_if(empty($post), 404);
 
         return view('markdown-blog::post', [

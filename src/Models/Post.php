@@ -138,7 +138,6 @@ class Post extends Model implements JsonSerializable
     public static function current()
     {
         $permalink = request()->getPathInfo();
-        ray($permalink)->blue();
         return self::permalink($permalink)->first();
     }
 
@@ -308,12 +307,6 @@ class Post extends Model implements JsonSerializable
     }
 
     public function getUrlAttribute()
-    {
-        ray($this->permalink)->orange();
-        return url($this->permalink);
-    }
-
-    public function url(): string
     {
         return url($this->permalink);
     }

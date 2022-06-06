@@ -52,7 +52,7 @@ class MarkdownBlog
         $generated = \Blade::compileString($value);
 
         ob_start() and extract($args, EXTR_SKIP);
-        ray(html_entity_decode($generated))->blue();
+
         // We'll include the view contents for parsing within a catcher
         // so we can avoid any WSOD errors. If an exception occurs we
         // will throw it out to the exception handler.

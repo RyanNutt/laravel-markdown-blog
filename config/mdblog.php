@@ -25,10 +25,6 @@ return [
 
         // Only pages with a specified tag
         'tags' => env('MDBLOG_PERMALINK_TAG', '/posts/tag/{slug}'),
-
-        // If true, all permalinks will end with a trailing slash even if it's 
-        // not part of a defined permalink
-        'trailing_slash' => env('MDBLOG_PERMALINK_TRAILING_SLASH', true),
     ],
 
     'controllers' => [

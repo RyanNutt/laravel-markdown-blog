@@ -18,3 +18,8 @@ if (!empty($posts)) {
         Route::get($post->permalink, config('mdblog.controllers.post'));
     }
 }
+
+// Webhook route, only add if set
+if (config('mdblog.webhook', false) !== false && config('mdblog.webhook.route', false) !== false) {
+    Route::post(config('mdblog.webhook.route'), config('mdblog.controllers.webhook'));
+}

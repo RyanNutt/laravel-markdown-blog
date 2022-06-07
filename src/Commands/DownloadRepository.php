@@ -47,23 +47,31 @@ class DownloadRepository extends Command
         $downloadPath = Str::finish(storage_path('mdblog'), '/') . '.gitdownload.zip';
         file_put_contents($downloadPath, $response->getBody()->__toString());
 
+        $this->line('Downloaded repository ' . $repository);
+
         // Unzip
         $za = new \ZipArchive();
 
         $za->open(storage_path('mdblog/.gitdownload.zip'));
 
+        $this->line('Unzipping files');
+        $cnt = 0;
         for ($i = 0; $i < $za->numFiles; $i++) {
             $stat = $za->statIndex($i);
             if ($stat['size'] > 0) {
                 // Can't write directories, it'll be taken care of by the file
+                $this->line('... ' . Str::after($stat['name'], '/'));
                 $fullPath = storage_path('mdblog/') . Str::after($stat['name'], '/');
                 $contents = $za->getFromIndex($i);
                 $storage->put($fullPath, $contents);
+                $cnt++;
             }
         }
+        $this->line('Downloaded ' . number_format($cnt) . ' files');
         $za->close();
         $storage->delete(storage_path('mdblog/.gitdownload.zip'));
 
+        $this->line('Rebuilding Cache');
         Artisan::call('mdblog:cache');
 
         return self::SUCCESS;

@@ -32,6 +32,7 @@ return [
         'category' => '\Aelora\MarkdownBlog\Http\Controllers\CategoryController@index',
         'tag' => '\Aelora\MarkdownBlog\Http\Controllers\TagController@index',
         'post' => '\Aelora\MarkdownBlog\Http\Controllers\PostController@index',
+        'webhook' => '\Aelora\MarkdownBlog\Http\Controllers\WebhookController@index',
     ],
 
     'webhook' => [

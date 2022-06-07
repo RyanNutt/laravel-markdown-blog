@@ -22,6 +22,7 @@ class Post extends Model implements JsonSerializable
         'tags' => 'array',
         'categories' => 'array',
         'post' => 'boolean',
+        'rawFrontMatter' => 'array'
     ];
 
     private $frontMatter = null;
@@ -129,6 +130,9 @@ class Post extends Model implements JsonSerializable
         } else if ($obj->date > Carbon::now()) {
             $obj->published = false;
         }
+
+        $obj->rawFrontMatter = $o->matter();
+
         return $obj;
     }
 
@@ -215,6 +219,7 @@ class Post extends Model implements JsonSerializable
             'fullpath' => $this->fullpath,
             'post' => (bool)$this->post,
             'published' => (bool)$this->published,
+            'rawFrontMatter' => json_encode($this->rawFrontMatter)
         ];
     }
 
@@ -286,6 +291,16 @@ class Post extends Model implements JsonSerializable
     public function getYearAttribute()
     {
         return $this->date->year;
+    }
+
+    public function getDescriptionAttribute()
+    {
+        return !empty($this->rawFrontMatter['description']) ? $this->rawFrontMatter['description'] : '';
+    }
+
+    public function getImageAttribute()
+    {
+        return !empty($this->rawFrontMatter['image']) ? $this->rawFrontMatter['image'] : '';
     }
 
     /**

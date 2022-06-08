@@ -121,8 +121,9 @@ class Post extends Model implements JsonSerializable
         // Remove trailing slash, even if it's explicitly defined
         $obj->permalink = preg_replace('#/{1}$#', '', $obj->permalink);
 
-        $isPost = $o->matter('post', true);
-        $obj->post = $isPost === true || Str::toLower($isPost) == 'true' || $isPost == '1';
+        $obj->postType = Str::lower($o->matter('type', 'post'));
+
+        $obj->post = $obj->postType == 'post';
 
         $obj->published = true;
         if (array_key_exists('draft', $o->matter())) {
@@ -217,7 +218,7 @@ class Post extends Model implements JsonSerializable
             'filename' => $this->filename,
             'name' => $this->name,
             'fullpath' => $this->fullpath,
-            'post' => (bool)$this->post,
+            'type' => Str::lower($this->postType),
             'published' => (bool)$this->published,
             'rawFrontMatter' => json_encode($this->rawFrontMatter)
         ];
@@ -250,7 +251,13 @@ class Post extends Model implements JsonSerializable
      */
     public function scopePosts($qry)
     {
-        $qry->where('post', true);
+        $qry->where('type', 'post');
+    }
+
+    public function scopeType($qry, $type = 'post')
+    {
+        $type = Str::lower($type);
+        $qry->where('type', $type);
     }
 
     /**
@@ -258,7 +265,7 @@ class Post extends Model implements JsonSerializable
      */
     public function scopeNotPosts($qry)
     {
-        $qry->where('post', false);
+        $qry->whereNot('type', 'post');
     }
 
     /**

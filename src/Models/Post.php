@@ -4,26 +4,29 @@ namespace Aelora\MarkdownBlog\Models;
 
 use Aelora\MarkdownBlog\Facades\MarkdownBlog;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
 use JsonSerializable;
 use Spatie\YamlFrontMatter\YamlFrontMatter;
 use Str;
 use Symfony\Component\Yaml\Yaml;
-use Illuminate\Database\Eloquent\Builder;
 
 class Post extends Model implements JsonSerializable
 {
 
-    use \Sushi\Sushi;
     protected $casts = [
         'date' => 'datetime',
         'tags' => 'array',
         'categories' => 'array',
         'post' => 'boolean',
-        'rawFrontMatter' => 'array'
+        'front_matter' => 'array',
     ];
+
+    protected $table = 'mdblog';
 
     private $frontMatter = null;
 
@@ -32,35 +35,6 @@ class Post extends Model implements JsonSerializable
         static::addGlobalScope('published', function (Builder $builder) {
             $builder->where('published', true);
         });
-    }
-
-    public function getRows()
-    {
-        if (!file_exists(storage_path('mdblog'))) {
-            // If the storage folder isn't there, can't do anything with this
-            // so just bail. 
-            return [];
-        }
-        return Cache::store(MarkdownBlog::cacheStore())->rememberForever('mdblog.posts', function () {
-            $allFiles = File::allFiles(storage_path('mdblog'));
-            $files = [];
-            if (!empty($allFiles)) {
-                foreach ($allFiles as $file) {
-                    $lcFilename = $file->getFilename();
-                    if (Str::endsWith($lcFilename, ['.md', '.markdown', '.html', '.html'])) {
-                        // Only want markdown or html files
-                        //$filePath = preg_replace('#^' . storage_path('mdblog') . '#', '', $file->getPathname());
-                        $files[] = Post::fromFile($file->getPathname())->toArray();
-                    }
-                }
-            }
-            return $files;
-        });
-    }
-
-    protected function sushiShouldCache()
-    {
-        return false;
     }
 
     /**
@@ -79,14 +53,12 @@ class Post extends Model implements JsonSerializable
         // to an array when needed. We're storing the slug, not the actual
         // name. If name is needed later it'll get pulled from the Category
         // model using the slug. 
-        $o->categories = collect($o->categories ?? $o->category)->toArray();
-        $o->tags = collect($o->tags ?? $o->tag)->toArray();
-        $obj->categories = json_encode(array_map(function ($cat) {
-            return Str::slug($cat);
-        }, $o->categories ?? []));
-        $obj->tags = json_encode(array_map(function ($tag) {
-            return Str::slug($tag);
-        }, $o->tags ?? []));
+        $obj->categories = Arr::map(collect($o->categories ?? $o->category)->toArray(), function ($v, $idx) {
+            return MarkdownBlog::cleanPath($v);
+        });
+        $obj->tags = Arr::map(collect($o->tags ?? $o->tag)->toArray(), function ($v, $idx) {
+            return MarkdownBlog::cleanPath($v);
+        });
 
         // The rest of this might need the filename
         $obj->filepath = $file;
@@ -94,12 +66,12 @@ class Post extends Model implements JsonSerializable
         $obj->name = pathinfo($file, PATHINFO_FILENAME);
         $obj->fullpath = $file;
         if ($o->matter('date') != '') {
-            $obj->date = Carbon::parse($o->date);
+            $obj->publish_date = Carbon::parse($o->date);
         } else if (preg_match('/(\/|^)(\d{4}-\d{2}-\d{2})/', $file, $matches)) {
-            $obj->date = Carbon::parse($matches[2]);
+            $obj->publish_date = Carbon::parse($matches[2]);
         } else {
             // Better than nothing
-            $obj->date = Carbon::now();
+            $obj->publish_date = Carbon::now();
         }
 
         // Strip date, if there from name
@@ -121,19 +93,23 @@ class Post extends Model implements JsonSerializable
         // Remove trailing slash, even if it's explicitly defined
         $obj->permalink = preg_replace('#/{1}$#', '', $obj->permalink);
 
-        $obj->postType = Str::lower($o->matter('type', 'post'));
+        $obj->type = Str::lower($o->matter('type', 'post'));
 
-        $obj->post = $obj->postType == 'post';
+        // High default so can sneak in before or after without defining for all posts
+        $obj->sort_order = $o->matter('sort', 50);
 
         $obj->published = true;
         if (array_key_exists('draft', $o->matter())) {
             $obj->published = false;
-        } else if ($obj->date > Carbon::now()) {
+        } else if ($obj->publish_date > Carbon::now()) {
             $obj->published = false;
         }
 
-        $obj->rawFrontMatter = $o->matter();
+        $obj->front_matter = $o->matter();
 
+        $obj->parent_id = 0; // Will get filled in later after filling table
+
+        $obj->content = $o->body();
         return $obj;
     }
 
@@ -157,7 +133,7 @@ class Post extends Model implements JsonSerializable
     public function html(): string
     {
         $parsedown = new \Parsedown();
-        return $parsedown->text($this->content());
+        return $parsedown->text($this->content);
     }
 
     public function rendered(): string
@@ -209,6 +185,7 @@ class Post extends Model implements JsonSerializable
     public function toArray($opts = 0): mixed
     {
         return [
+            'id' => $this->id,
             'title' => $this->title,
             'tags' => $this->tags,
             'categories' => $this->categories,
@@ -220,8 +197,28 @@ class Post extends Model implements JsonSerializable
             'fullpath' => $this->fullpath,
             'type' => Str::lower($this->postType),
             'published' => (bool)$this->published,
-            'rawFrontMatter' => json_encode($this->rawFrontMatter)
+            'rawFrontMatter' => json_encode($this->rawFrontMatter),
+            'parent_id' => $this->parent_id,
+            'children' => $this->children,
+            'next' => $this->next,
+            'previous' => $this->previous,
+            'sortOrder' => $this->sortOrder,
         ];
+    }
+
+    /**
+     * Add query to filter out the post that's the parent of the 
+     * passed post. It's passed as either a Post reference or the
+     * permalink of that post. The permalink is what's actually
+     * queried, so there's no reason to load a full post for this
+     * method unless it's already been loaded. 
+     */
+    public function scopeParentOf($qry, Post|string $post)
+    {
+        if ($post instanceof Post) {
+            $post = $post->permalink;
+        }
+        $qry->where('parent', $post);
     }
 
     public function scopeYear($qry, $year)
@@ -246,6 +243,18 @@ class Post extends Model implements JsonSerializable
         $qry->where('permalink', $permalink);
     }
 
+    public function scopeBestMatch($qry, $searchFor, $limitToType = false)
+    {
+        $qry->where(function ($q) use ($searchFor) {
+            $q->where('permalink', 'LIKE', '%' . $searchFor . '%');
+            $q->orWhere('filepath', 'LIKE', '%' . $searchFor . '%');
+        });
+
+        if ($limitToType) {
+            $qry->where('type', $limitToType);
+        }
+    }
+
     /**
      * Only posts that should show up in the blog lists
      */
@@ -258,6 +267,12 @@ class Post extends Model implements JsonSerializable
     {
         $type = Str::lower($type);
         $qry->where('type', $type);
+    }
+
+    public function scopeNotType($qry, $type = 'post')
+    {
+        $type = Str::lower($type);
+        $qry->whereNot('type', $type);
     }
 
     /**
@@ -361,5 +376,72 @@ class Post extends Model implements JsonSerializable
             return Tag::where('slug', $tags[0])->first();
         }
         return null;
+    }
+
+    public function parentPost(): ?Post
+    {
+        if (!empty($this->parent)) {
+            return Post::permalink($this->parent)->first();
+        }
+        return null;
+    }
+
+    /**
+     * Get children of post, and any grandchildren up to and 
+     * including $maxDepth. 
+     * 
+     * @TODO $maxDepth is currently ignored, always 1
+     */
+    public function childPosts($maxDepth = 1): ?\Illuminate\Support\Collection
+    {
+        $children = collect();
+        foreach ($this->children as $childPermalink) {
+            $child = Post::permalink($childPermalink)->first();
+            dump($child);
+            if (!empty($child)) {
+                $children->push($child);
+            }
+        }
+        return $children;
+    }
+
+    public function nextPost(): ?Post
+    {
+        return null;
+    }
+
+    public function nextInCategory($catSlug): ?Post
+    {
+        return null;
+    }
+
+    public function nextInTag($tagSlug): ?Post
+    {
+        return null;
+    }
+
+    public function previousPost(): ?Post
+    {
+        return null;
+    }
+
+    public function previousInCategory($catSlug): ?Post
+    {
+        return null;
+    }
+
+    public function previousInTag($tagSlug): ?Post
+    {
+        return null;
+    }
+
+    public function children()
+    {
+        return $this->hasMany(self::class, 'parent_id');
+    }
+
+    public function parent()
+    {
+        return $this->belongsTo(self::class, 'parent_id');
     }
 }

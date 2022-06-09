@@ -23,6 +23,9 @@ class BuildCache extends Command
 
     public function handle(): int
     {
+        Post::truncate();
+        return 1;
+
         Cache::store(MarkdownBlog::cacheStore())->forget('mdblog.posts');
         Cache::store(MarkdownBlog::cacheStore())->forget('mdblog.categories');
         Cache::store(MarkdownBlog::cacheStore())->forget('mdblog.tags');

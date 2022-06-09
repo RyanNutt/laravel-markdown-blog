@@ -1,0 +1,32 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up()
+    {
+        Schema::create('mdblog', function (Blueprint $table) {
+            $table->id();
+            $table->string('title', 255)->default('');
+            $table->json('tags')->nullable();
+            $table->json('categories')->nullable();
+            $table->datetime('publish_date');
+            $table->string('permalink', 255)->default('');
+            $table->string('filepath', 255)->default('');
+            $table->string('filename', 100)->default('');
+            $table->string('name', 100)->default('');
+            $table->string('fullpath', 255)->default('');
+            $table->string('type', 50)->default('');
+            $table->boolean('published')->default(false);
+            $table->json('front_matter')->default('');
+            $table->bigInteger('parent_id')->default(0);
+            $table->integer('sort_order')->default(50); 
+            $table->text('content')->nullable(); 
+
+            $table->timestamps();
+        });
+    }
+};

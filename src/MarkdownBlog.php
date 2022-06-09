@@ -2,7 +2,9 @@
 
 namespace Aelora\MarkdownBlog;
 
+use Illuminate\Support\Facades\File;
 use Str;
+use Aelora\MarkdownBlog\Models\Post;
 
 class MarkdownBlog
 {
@@ -71,5 +73,82 @@ class MarkdownBlog
         $content = ob_get_clean();
 
         return $content;
+    }
+
+    /**
+     * Fill the mdblog table with post information from the markdown / html
+     * files that were downloaded.
+     * 
+     * This could probably be way more efficient, but since it only happens on
+     * update I'm not too worried about it right now. 
+     */
+    public function buildCache($fileDir = false)
+    {
+        // Empty the cache table
+        \Aelora\MarkdownBlog\Models\Post::truncate();
+
+        if ($fileDir === false) {
+            $fileDir = storage_path('mdblog');
+        }
+
+        throw_if(!file_exists($fileDir), new \Exception($fileDir . ' does not exist'));
+
+        $allFiles = File::allFiles($fileDir);
+        if (!empty($allFiles)) {
+            foreach ($allFiles as $file) {
+                $lcFilename = Str::lower($file->getFilename());
+                if (Str::endsWith($lcFilename, ['.md', '.markdown', '.htm', '.html'])) {
+                    // Only going to process markdown or html files
+                    $p = Post::fromFile($file->getPathname());
+                    $p->save();
+                }
+            }
+        }
+
+        // Have to go back and fill in parent_id. This has to be done after they're all
+        // loaded so the full set can be queried. 
+        $allPosts = Post::where('parent_id', 0)->notType('post')->get();
+        foreach ($allPosts as $currentPost) {
+            $fm = $currentPost->front_matter;
+            if (!empty($fm['children'])) {
+                foreach ($fm['children'] as $child) {
+                    $childPost = Post::bestMatch($child, $currentPost->type)->first();
+                    if (!empty($childPost)) {
+                        $childPost->parent_id = $currentPost->id;
+                        $childPost->save();
+                    }
+                }
+            } else {
+                // Try and get children from permalink
+                $childPosts = Post::where('permalink', 'LIKE', $currentPost->permalink . '%')->get();
+                if (!empty($childPosts)) {
+                    foreach ($childPosts as $child) {
+                        if (Str::beforeLast($child->permalink, '/') == $currentPost->permalink) {
+                            $child->parent_id = $currentPost->id;
+                            $child->save();
+                        }
+                    }
+                }
+            }
+
+            if (!empty($fm['parent'])) {
+                // Possible that this overrides a parent_id set by children in the front 
+                // matter, but the parent field should have priority so it's okay for
+                // it to override. 
+                // $parentPost = Post::bestMatch($fm['parent'], $currentPost->type)->first();
+                $parentPost = Post::permalink($fm['parent'])->first();
+                if (!empty($parentPost)) {
+                    $currentPost->parent_id = $parentPost->id;
+                    $currentPost->save();
+                }
+            } else {
+                // Try and get parent by the permalink
+                $parentPost = Post::permalink(Str::beforeLast($currentPost->permalink, '/'))->first();
+                if (!empty($parentPost)) {
+                    $currentPost->parent_id = $parentPost->id;
+                    $currentPost->save();
+                }
+            }
+        }
     }
 }

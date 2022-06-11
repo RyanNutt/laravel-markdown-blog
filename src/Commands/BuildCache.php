@@ -89,54 +89,6 @@ class BuildCache extends Command
             }
         }
 
-        $this->error('done');
-        return 1;
-        die('123');
-
-
-        $newMatter = [];
-
-        // Load all posts and look for images
-        $allPosts = Post::all();
-        foreach ($allPosts as $post) {
-            // Fix any images so they're pointing to the right place
-            $post->content = preg_replace_callback('/!\[.*?\]\((.*?)\)/', function ($match) {
-                $toReplace = $match[0];
-                $imagePath = $match[1];
-                if (preg_match('/^https?:\/\//', $imagePath) || Str::startsWith($imagePath, '//') || Str::startsWith($imagePath, 'data:')) {
-                    // Absolute URL, don't do anything
-                    return $toReplace;
-                } else if (!file_exists(storage_path('mdblog/' . $imagePath))) {
-                    // If the file isn't in the repo, don't bother replacing the url
-                    return $toReplace;
-                }
-                $destPath = public_path(config('mdblog.public_path') . '/' . $imagePath);
-                File::makeDirectory(dirname($destPath), 0755, true, true);
-                File::copy(storage_path('mdblog/' . $imagePath), $destPath);
-
-                $url = url(config('mdblog.public_path') . '/' . $imagePath);
-                return Str::replace($match[1], $url, $match[0]);
-            }, $content);
-
-            // Look for local image path
-            $featuredImage = $post->image;
-            if (empty($featuredImage) || preg_match('/^https?:\/\//', $featuredImage) || Str::startsWith($featuredImage, '//') || Str::startsWith($featuredImage, 'data:')) {
-                // Don't have to do anything, but easier to catch this an do 
-                // nothing that worry about it on the next step
-            } else if (file_exists(storage_path('mdblog/' . $featuredImage))) {
-                // Can only do this if it exists
-                $destPath = public_path(config('mdblog.public_path') . '/' . $featuredImage);
-                // Will create the directory if it doesn't exist
-                File::makeDirectory(dirname($destPath), 0755, true, true);
-                File::copy(storage_path('mdblog/' . $featuredImage), $destPath);
-                $post->image = url(config('mdblog.public_path') . '/' . $featuredImage);
-            }
-
-            $post->content = $content;
-            $post->save();
-
-            // $post->updateContent($content, $newMatter);
-        }
 
         // Don't care about the data, but this triggers a cache rebuild
         \Aelora\MarkdownBlog\Models\Category::first();

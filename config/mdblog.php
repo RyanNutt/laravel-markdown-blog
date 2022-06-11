@@ -43,13 +43,30 @@ return [
     // Number of posts shown per page on blog
     'per_page' => env('MDBLOG_PER_PAGE', 10),
 
-    'cache' => env('MDBLOG_CACHE', 'default'),
+    /**
+     * Settings for the folder where publicly accessible assets will be copied
+     * when the repository is downloaded. 
+     */
+    'public' =>  [
+        /**
+         * Base path, relative to public folder, where to copy asset files that should
+         * be publicly accessible. These will normally be image, CSS or JS files; although
+         * you can specify additional extensions below. The path is is relative to the 
+         * public folder. 
+         */
+        'path' => env('MDBLOG_PUBLIC_PATH', 'assets/blog'),
 
-    // Path to store images that are downloaded from the git repository so that they
-    // can be publicly accessible. This is relative to the public_path of the application.
-    'public_path' => env('MDBLOG_PUBLIC_PATH', 'assets/blog'),
+        /**
+         * Should the base public folder be cleared out when the cache is rebuilt. Be careful
+         * with this. It should be set to false if you're using a folder for mdblog.public.path 
+         * that contains files other than ones handled by this package. 
+         */
+        'delete' => env('MDBLOG_DELETE_PUBLIC_PATH', true),
 
-    // Delete files from the public path when a new copy of the repo is downloaded. Be 
-    // careful with this if public_path is a folder where other files are stored.
-    'delete_public_path' => env('MDBLOG_DELETE_PUBLIC_PATH', true),
+        /**
+         * Extensions in this list will be copied to the public assets folder. Everything else
+         * will be ignored. Case insensitive. 
+         */
+        'copy_extensions' => env('MDBLOG_PUBLIC_EXTENSIONS', 'jpg,jpeg,gif,png,css,js'),
+    ],
 ];

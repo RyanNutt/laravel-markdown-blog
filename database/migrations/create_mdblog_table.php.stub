@@ -20,6 +20,7 @@ return new class extends Migration
             $table->string('name', 100)->default('');
             $table->string('fullpath', 255)->default('');
             $table->string('type', 50)->default('');
+            $table->string('image', 255)->default(''); 
             $table->boolean('published')->default(false);
             $table->json('front_matter')->default('');
             $table->bigInteger('parent_id')->default(0);

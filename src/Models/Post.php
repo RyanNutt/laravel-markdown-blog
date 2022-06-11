@@ -105,6 +105,8 @@ class Post extends Model implements JsonSerializable
             $obj->published = false;
         }
 
+        $obj->image = $o->matter('image', '');
+
         $obj->front_matter = $o->matter();
 
         $obj->parent_id = 0; // Will get filled in later after filling table
@@ -318,11 +320,6 @@ class Post extends Model implements JsonSerializable
     public function getDescriptionAttribute()
     {
         return !empty($this->rawFrontMatter['description']) ? $this->rawFrontMatter['description'] : '';
-    }
-
-    public function getImageAttribute()
-    {
-        return !empty($this->rawFrontMatter['image']) ? $this->rawFrontMatter['image'] : '';
     }
 
     /**

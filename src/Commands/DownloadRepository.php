@@ -7,6 +7,7 @@ use Str;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\File;
 
 class DownloadRepository extends Command
 {
@@ -22,7 +23,12 @@ class DownloadRepository extends Command
         }
 
         $storage = Storage::build(['driver' => 'local', 'root' => '/']);
-        $storage->deleteDirectory(storage_path('mdblog'));
+        if (File::isDirectory(storage_path('mdblog'))) {
+            (new \Illuminate\Filesystem\Filesystem())->cleanDirectory(storage_path('mdblog'));
+        } else {
+            File::makeDirectory(storage_path('mdblog'));
+        }
+
         throw_if(!$storage->makeDirectory(storage_path('mdblog')), new \Exception('Could not create folder for Markdown Blog files'));
 
         $repository = Str::finish(config('mdblog.repository.url'), '/');
@@ -44,7 +50,12 @@ class DownloadRepository extends Command
         if ($statusCode < 200 || $statusCode >= 300) {
             throw new \Exception('Invalid response from repository: ' . $statusCode);
         }
+
         $downloadPath = Str::finish(storage_path('mdblog'), '/') . '.gitdownload.zip';
+
+        if (!File::isDirectory(dirname($downloadPath))) {
+            File::makeDirectory(dirname($downloadPath));
+        }
         file_put_contents($downloadPath, $response->getBody()->__toString());
 
         $this->line('Downloaded repository ' . $repository);

@@ -12,11 +12,16 @@ Route::get(config('mdblog.permalinks.tags'), config('mdblog.controllers.tag'))
     ->name('mdblog.tag');
 
 // Add all permalinks as routes
-$posts = Post::all();
-if (!empty($posts)) {
-    foreach ($posts as $post) {
-        Route::get($post->permalink, config('mdblog.controllers.post'));
+try {
+    // In case the database table doesn't exist, there wouldn't be 
+    // any routes anyway. 
+    $posts = Post::all();
+    if (!empty($posts)) {
+        foreach ($posts as $post) {
+            Route::get($post->permalink, config('mdblog.controllers.post'));
+        }
     }
+} catch (\Exception $e) {
 }
 
 // Webhook route, only add if set

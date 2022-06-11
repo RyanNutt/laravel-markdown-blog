@@ -21,7 +21,10 @@ class MarkdownBlogServiceProvider extends PackageServiceProvider
             ->hasRoutes(['web'])
             ->hasCommand(Commands\BuildCache::class)
             ->hasCommand(Commands\DownloadRepository::class)
-            ->hasViews();
+            ->hasViews()
+            ->hasMigrations([
+                'create_mdblog_table'
+            ]);
     }
 
     public function boot()

@@ -1,5 +1,7 @@
 <?php
 
+use Aelora\MarkdownBlog\Models\Post;
+
 /**
  * Test that we're able to download files from a public GitHub repository.
  */
@@ -23,9 +25,49 @@ test('Download zip file', function () {
         'subfolder/file6.markdown',
         'subfolder/file7.html',
         'subfolder/file8.htm',
+        'subfolder/featuredimage.md',
     ];
 
     foreach ($expectedFiles as $expFile) {
         expect(file_exists(storage_path('mdblog/' . $expFile)))->toBeTrue();
     }
+});
+
+test('Files added to database', function () {
+    config()->set('mdblog.repository.url', 'https://github.com/RyanNutt/laravel-markdown-testrepo');
+    Artisan::call('mdblog:download');
+    expect(count(Post::all()))->toBe(10);
+});
+
+test('Expected permalinks', function () {
+    config()->set('mdblog.repository.url', 'https://github.com/RyanNutt/laravel-markdown-testrepo');
+    Artisan::call('mdblog:download');
+
+    $expectedPermalinks = [
+        '/image-tests',
+        '/file1',
+        '/file2',
+        '/file3',
+        '/file4',
+        '/subfolder/file5',
+        '/subfolder/file6',
+        '/subfolder/file7',
+        '/subfolder/file8',
+    ];
+
+    foreach ($expectedPermalinks as $pm) {
+        $p = Post::permalink($pm)->first();
+        expect($p)->not->toBeNull();
+    }
+});
+test('Image Replacements', function () {
+    config()->set('mdblog.repository.url', 'https://github.com/RyanNutt/laravel-markdown-testrepo');
+    Artisan::call('mdblog:download');
+
+    $p = Post::permalink('/image-tests')->first();
+    expect($p->image)->toBe(url('assets/blog/subfolder/990000.png'));
+
+    expect($p->content)->toContain(url('assets/blog/subfolder/990000.gif'));
+
+    expect($p->content)->toContain('https://via.placeholder.com/600x400/009900.png');
 });

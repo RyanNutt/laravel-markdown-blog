@@ -30,13 +30,6 @@ class Post extends Model implements JsonSerializable
 
     private $frontMatter = null;
 
-    protected static function booted()
-    {
-        static::addGlobalScope('published', function (Builder $builder) {
-            $builder->where('published', true);
-        });
-    }
-
     /**
      * Load the model from a markdown file
      */
@@ -53,10 +46,10 @@ class Post extends Model implements JsonSerializable
         // to an array when needed. We're storing the slug, not the actual
         // name. If name is needed later it'll get pulled from the Category
         // model using the slug. 
-        $obj->categories = array_map(function ($v, $idx) {
+        $obj->categories = array_map(function ($v) {
             return MarkdownBlog::cleanPath($v);
         }, collect($o->categories ?? $o->category)->toArray());
-        $obj->tags = array_map(function ($v, $idx) {
+        $obj->tags = array_map(function ($v) {
             return MarkdownBlog::cleanPath($v);
         }, collect($o->tags ?? $o->tag)->toArray());
 
@@ -121,7 +114,7 @@ class Post extends Model implements JsonSerializable
     public static function current()
     {
         $permalink = request()->getPathInfo();
-        return self::permalink($permalink)->first();
+        return self::permalink($permalink)->published()->first();
     }
 
     /**
@@ -275,6 +268,54 @@ class Post extends Model implements JsonSerializable
     {
         $type = Str::lower($type);
         $qry->whereNot('type', $type);
+    }
+
+    /**
+     * Scope to filter out only published posts. This should probably be
+     * used in almost all cases unless you want draft and future dated
+     * posts included. 
+     */
+    public function scopePublished($qry)
+    {
+        $qry->where('publish_date', '<=', now());
+        $this->scopeNotFrontMatter($qry, 'draft');
+    }
+
+    /**
+     * Filter for posts containing a specific front matter key, and optionally
+     * a value for that key. If $value is empty then any post that contains $key
+     * is included. If $value is not empty then only posts that have that $key 
+     * at that $value are included. 
+     */
+    public function scopeFrontMatter($qry, $key, $value = null)
+    {
+        if ($value === null) {
+            // Just has that key, doesn't matter the value
+            $qry->whereNotNull('front_matter->' . $key);
+        } else {
+            // Has the key and specific value
+            $qry->where('front_matter->' . $key, $value);
+        }
+    }
+
+    /**
+     * Filter to filter out posts that have a specific front matter element and
+     * value. If $value === null then all posts with any value, including blank, 
+     * for that key are filtered out. If $value !== null then only posts with 
+     * that key and value pair are filtered out. 
+     * 
+     * Either way, posts that do not have $key as part of their front matter
+     * are still included in the results. 
+     */
+    public function scopeNotFrontMatter($qry, $key, $value = null)
+    {
+        if ($value === null) {
+            // If the key is there at all, filter it out
+            $qry->whereNull('front_matter->' . $key);
+        } else {
+            // Only filter out where the key value matches
+            $qry->whereNot('front_matter->' . $key, $value);
+        }
     }
 
     /**

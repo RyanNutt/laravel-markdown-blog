@@ -14,8 +14,7 @@ class BlogController extends Controller
         // Anything <= 1 runs as page 1, I don't want that
         abort_if($request->get('page', 1) < 1, 404);
 
-        $paginator = Post::posts()->orderBy('date', 'DESC')->paginate(config('mdblog.per_page'));
-        abort_if($paginator->count() <= 0, 404);
+        $paginator = Post::posts()->published()->orderBy('date', 'DESC')->paginate(config('mdblog.per_page'));
 
         return view('markdown-blog::blog', [
             'posts' => $paginator,

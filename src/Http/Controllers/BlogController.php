@@ -15,7 +15,7 @@ class BlogController extends Controller
         abort_if($request->get('page', 1) < 1, 404);
 
         $paginator = Post::posts()->published()->orderBy('date', 'DESC')->paginate(config('mdblog.per_page'));
-
+        abort_if($paginator->count() <= 0, 404);
         return view('markdown-blog::blog', [
             'posts' => $paginator,
         ]);

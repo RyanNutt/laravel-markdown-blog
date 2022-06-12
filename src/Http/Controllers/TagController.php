@@ -17,7 +17,7 @@ class TagController extends Controller
         $cat = Tag::where('slug', $slug)->first();
         abort_if(empty($cat), 404);
 
-        $paginator = Post::posts()->tag($slug)->orderBy('date', 'DESC')->paginate(config('mdblog.per_page'));
+        $paginator = Post::posts()->tag($slug)->orderBy('publish_date', 'DESC')->paginate(config('mdblog.per_page'));
         abort_if($paginator->count() <= 0, 404);
 
         return view('markdown-blog::category', [

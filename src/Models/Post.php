@@ -53,12 +53,12 @@ class Post extends Model implements JsonSerializable
         // to an array when needed. We're storing the slug, not the actual
         // name. If name is needed later it'll get pulled from the Category
         // model using the slug. 
-        $obj->categories = Arr::map(collect($o->categories ?? $o->category)->toArray(), function ($v, $idx) {
+        $obj->categories = array_map(function ($v, $idx) {
             return MarkdownBlog::cleanPath($v);
-        });
-        $obj->tags = Arr::map(collect($o->tags ?? $o->tag)->toArray(), function ($v, $idx) {
+        }, collect($o->categories ?? $o->category)->toArray());
+        $obj->tags = array_map(function ($v, $idx) {
             return MarkdownBlog::cleanPath($v);
-        });
+        }, collect($o->tags ?? $o->tag)->toArray());
 
         // The rest of this might need the filename
         $obj->filepath = $file;

@@ -69,4 +69,19 @@ return [
          */
         'copy_extensions' => env('MDBLOG_PUBLIC_EXTENSIONS', 'jpg,jpeg,gif,png,css,js'),
     ],
+
+    /**
+     * Options for how posts are rendered
+     */
+    'render' => [
+        // Whether posts are rendered using the blade engine before output
+        'blade' => env('MDBLOG_RENDER_BLADE', true),
+
+        // Should markdown be converted to HTML through Parsedown
+        'html' => env('MDBLOG_RENDER_HTML', true),
+
+        // Should posts be output in raw Markdown. This overrides both .blade
+        // and .html in this config set. 
+        'raw' => env('MDBLOG_RENDER_RAW', false),
+    ],
 ];

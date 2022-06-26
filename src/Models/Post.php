@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
 use JsonSerializable;
@@ -419,6 +420,20 @@ class Post extends Model implements JsonSerializable
                     }
                 }, $value);
 
+                if (config('mdblog.render.raw', false) || $this->hasFrontMatter('raw')) {
+                    return $value;
+                }
+
+                if (config('mdblog.render.markdown', true) && !$this->hasFrontMatter('markdown')) {
+                    $parsedown = new \Parsedown();
+                    $value = $parsedown->text($value);
+                }
+
+                if (config('mdblog.render.blade', true) && !$this->hasFrontMatter('noblade')) {
+                    $value = Blade::render($value, [
+                        'post' => $this,
+                    ]);
+                }
                 return $value;
             }
         );
@@ -628,5 +643,20 @@ class Post extends Model implements JsonSerializable
         }, $content);
 
         return $content;
+    }
+
+    /**
+     * Returns whether the front matter has the key specified, with any value. 
+     * 
+     * @param string $key Can be dot notation for an array since this is going through
+     *      Arr::get to pull the value. If null then it's whether front matter
+     *      exists at all. 
+     */
+    public function hasFrontMatter($key = null): bool
+    {
+        if ($key === null) {
+            return !empty($this->front_matter);
+        }
+        return Arr::get($this->front_matter, $key, null) !== null;
     }
 }

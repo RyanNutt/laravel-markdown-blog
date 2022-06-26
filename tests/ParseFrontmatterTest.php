@@ -6,6 +6,7 @@
  */
 
 use Aelora\MarkdownBlog\Models\Post;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\File;
 
 beforeEach(function () {
@@ -67,4 +68,40 @@ test('Singular category and tag', function () {
 test('Future dated post', function () {
     $p = Post::fromFile(__DIR__ . '/fixtures/frontmatter/draftfuturedate.md');
     expect($p->published)->toBe(false);
+});
+
+// hasFrontMatter tests
+test('hasFrontMatter(null)', function () {
+    $p = new Post();
+    $testValues = [null, [], ''];
+    foreach ($testValues as $tv) {
+        $p->front_matter = $tv;
+        expect($p->hasFrontMatter())->toBeFalse();
+    }
+});
+
+test('hasFrontMatter(null) true', function () {
+    $p = new Post();
+    $testValues = [['yes'], 'hi'];
+    foreach ($testValues as $tv) {
+        $p->front_matter = $tv;
+        expect($p->hasFrontMatter())->toBeTrue();
+    }
+});
+
+test('hasFrontMatter($value) - true', function () {
+    $testValues = [];
+    Arr::set($testValues, 'somekey', '1');
+    Arr::set($testValues, 'anotherkey', '2');
+    Arr::set($testValues, 'nested.value', 1);
+
+    $p = new Post();
+    $p->front_matter = $testValues;
+
+    expect($p->hasFrontMatter('somekey'))->toBeTrue();
+    expect($p->hasFrontMatter('anotherkey'))->toBeTrue();
+    expect($p->hasFrontMatter('nested.value'))->toBeTrue();
+
+    expect($p->hasFrontMatter('whatever'))->toBeFalse();
+    expect($p->hasFrontMatter(''))->toBeFalse();
 });

@@ -69,7 +69,7 @@ test('image path - markdown relative to root', function () {
     $p->fullpath = storage_path('mdblog/test.md');
     $p->content = $mdtext;
 
-    expect($p->content)->toBe($expectedText);
+    expect($p->content)->toContain('src="/assets/blog/image.png"');
 });
 
 test('image path - markdown relative to repo root', function () {
@@ -78,7 +78,7 @@ test('image path - markdown relative to repo root', function () {
     $p = new Post();
     $p->fullpath = storage_path('mdblog/subfolder/test.md');
     $p->content = $mdText;
-    expect($p->content)->toBe($expectedText);
+    expect($p->content)->toContain('src="/assets/blog/image.png"');
 });
 
 test('markdown with alt text', function () {
@@ -87,7 +87,7 @@ test('markdown with alt text', function () {
     $p = new Post();
     $p->fullpath = storage_path('mdblog/subfolder.test.md');
     $p->content = $mdText;
-    expect($p->content)->toBe($expectedText);
+    expect($p->content)->toContain('src="/assets/blog/image.png"');
 });
 
 test('image in subfolder of post', function () {
@@ -96,7 +96,7 @@ test('image in subfolder of post', function () {
     $p = new Post();
     $p->fullpath = storage_path('mdblog/subfolder/test.md');
     $p->content = $mdText;
-    expect($p->content)->toBe($expText);
+    expect($p->content)->toContain('src="/assets/blog/subfolder/sub/image.png"');
 });
 
 test('image in parent folder from post', function () {
@@ -105,7 +105,7 @@ test('image in parent folder from post', function () {
     $p = new Post();
     $p->fullpath = storage_path('mdblog/subfolder/test.md');
     $p->content = $mdText;
-    expect($p->content)->toBe($expText);
+    expect($p->content)->toContain('src="/assets/blog/image.png"');
 });
 
 test('image in folder with leading dot', function () {
@@ -114,7 +114,7 @@ test('image in folder with leading dot', function () {
     $p = new Post();
     $p->fullpath = storage_path('mdblog/subfolder/test.md');
     $p->content = $mdText;
-    expect($p->content)->toBe($expText);
+    expect($p->content)->toContain('src="/assets/blog/subfolder/image.png"');
 });
 
 test('html only attribute', function () {

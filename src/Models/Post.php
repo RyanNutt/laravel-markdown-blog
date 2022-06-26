@@ -5,6 +5,7 @@ namespace Aelora\MarkdownBlog\Models;
 use Aelora\MarkdownBlog\Facades\MarkdownBlog;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
@@ -54,10 +55,12 @@ class Post extends Model implements JsonSerializable
         }, collect($o->tags ?? $o->tag)->toArray());
 
         // The rest of this might need the filename
-        $obj->filepath = $file;
+        $obj->fullpath = $file;
         $obj->filename = basename($file);
         $obj->name = pathinfo($file, PATHINFO_FILENAME);
-        $obj->fullpath = $file;
+
+        $obj->filepath = $file;
+
         if ($o->matter('date') != '') {
             $obj->publish_date = Carbon::parse($o->date);
         } else if (preg_match('/(\/|^)(\d{4}-\d{2}-\d{2})/', $file, $matches)) {
@@ -97,7 +100,6 @@ class Post extends Model implements JsonSerializable
         } else if ($obj->publish_date > Carbon::now()) {
             $obj->published = false;
         }
-
         $obj->image = $o->matter('image', '');
 
         $obj->front_matter = $o->matter();
@@ -128,19 +130,21 @@ class Post extends Model implements JsonSerializable
     public function html(): string
     {
         $parsedown = new \Parsedown();
-        return $parsedown->text($this->content);
+        return $this->fixImagePaths($parsedown->text($this->content));
     }
 
     public function rendered(): string
     {
         $html = $this->html();
-        return MarkdownBlog::bladeCompile($html, ['post' => $this]);
+        return Blade::render($html, [
+            'post' => $this,
+        ]);
     }
 
     /**
-     * Loads the contents of the markdown file
+     * Loads the raw contents from the markdown file
      */
-    public function content(): ?string
+    public function fileContent(): ?string
     {
         if (!file_exists($this->fullpath)) {
             return '';
@@ -342,20 +346,78 @@ class Post extends Model implements JsonSerializable
         $qry->where('tags', 'like', '%' . Str::slug($tag) . '%');
     }
 
-    // public function newQuery($excludeDeleted = true)
-    // {
-    //     $builder = parent::newQuery($excludeDeleted);
-    //     $builder->where('published', true);
-    //     return $builder;
-    //     // if (Config::get('hide_banned_users', true) !== false) {
-    //     //     $builder->where('banned', '=', '0');
-    //     // }
-    //     // return $builder;
-    // }
-
     public function getYearAttribute()
     {
         return $this->date->year;
+    }
+
+    /**
+     * Returns the image property from front matter after fixing the path
+     * so it's relative to the public assets folder. 
+     */
+    protected function image(): Attribute
+    {
+        return Attribute::make(
+            get: function ($value) {
+                $path = '';
+                if (empty($value) || Str::startsWith(strtolower($value), 'http')) {
+                    return $value;
+                } else if (Str::startsWith($value, '/') && !Str::startsWith($value, '//')) {
+                    // Path relative to repo root
+                    $path = '/' . config('mdblog.public.path', 'assets/blog') . $value;
+                } else {
+                    // Path relative to post directory
+                    $path = $this->publicPath($value);
+                }
+                return MarkdownBlog::normalizePath($path);
+            },
+        );
+    }
+
+    /**
+     * Returns the content of the post after processing the markdown and fixing relative 
+     * image paths. 
+     */
+    protected function content(): Attribute
+    {
+        return Attribute::make(
+            get: function ($value) {
+                // Markdown images
+                $value = preg_replace_callback('/(!\[.*?\]\()(.+?)\)/', function ($matches) {
+                    $before = $matches[1];
+                    $path = $matches[2];
+                    if (Str::startsWith($path, '/') && !Str::startsWith($path, '//')) {
+                        // Path relative to the repository root
+                        $newPath = Str::start(config('mdblog.public.path', 'assets/blog') . $path, '/');
+                        return $before . MarkdownBlog::normalizePath($newPath) . ')';
+                    } else {
+                        // Path relative to the post
+                        $newPath = $this->publicPath($path);
+                        // dd('/' . $before . $newPath . ')');
+                        return $before . MarkdownBlog::normalizePath($newPath) . ')';
+                    }
+                }, $value);
+
+                // HTML images
+                $value = preg_replace_callback('/(<img.*?)src="(.*?)"(.*?>)/i', function ($matches) {
+                    $before = $matches[1];
+                    $path = $matches[2];
+                    $after = $matches[3];
+                    if (Str::startsWith($path, '/') && !Str::startsWith($path, '//')) {
+                        // Path relative to the repository root
+                        $newPath = Str::start(config('mdblog.public.path', 'assets/blog') . $path, '/');
+                        return $before . 'src="' . MarkdownBlog::normalizePath($newPath) . '"' . $after;
+                    } else {
+                        // Path relative to the post
+                        $newPath = $this->publicPath($path);
+                        // dd('/' . $before . $newPath . ')');
+                        return $before . 'src="' . MarkdownBlog::normalizePath($newPath) . '"' . $after;
+                    }
+                }, $value);
+
+                return $value;
+            }
+        );
     }
 
     public function getDescriptionAttribute()
@@ -481,5 +543,82 @@ class Post extends Model implements JsonSerializable
     public function parent()
     {
         return $this->belongsTo(self::class, 'parent_id');
+    }
+
+    /**
+     * Returns the path relative to the public folder where this post would be, if it was
+     * copied to the public storage. Note that this is the folder of the post 
+     * file, not the file itself. 
+     * 
+     * This is primarily going to be used for images that are stored in the same
+     * folder as a markdown post so that paths can be fixed when the post is
+     * rendered. 
+     */
+    public function publicPath($subPath = false): string
+    {
+        return Str::start(config('mdblog.public.path', 'assets/blog') . $this->relativePath($subPath), '/');
+    }
+
+    /**
+     * Returns the path to this file, relative to the repository root. Should both
+     * begin and end with a forward slash. It does this by stripping the storage_path
+     * from the front of the full path, so this only works if the file is in the
+     * storage_path, which it should always be except possibly for tests. 
+     */
+    public function relativePath($subPath = false): string
+    {
+
+        $basePath = dirname(preg_replace('#^' . storage_path('mdblog') . '#', '', $this->fullpath));
+        $basePath = Str::start(Str::finish($basePath, '/'), '/');
+        if (!empty($subPath)) {
+            $basePath .= $subPath;
+        }
+        return $basePath;
+    }
+
+    /**
+     * Fix image paths in the content so that they're correctly pointing to the public
+     * assets folder, relative to where this post is stored. 
+     * 
+     * @deprecated Moved to the ->content() attribute getter
+     */
+    public function fixImagePaths(): string
+    {
+        $content = $this->content;
+
+        // Markdown images
+        $content = preg_replace_callback('/(!\[.*?\]\()(.+?)\)/', function ($matches) {
+            $before = $matches[1];
+            $path = $matches[2];
+            if (Str::startsWith($path, '/') && !Str::startsWith($path, '//')) {
+                // Path relative to the repository root
+                $newPath = Str::start(config('mdblog.public.path', 'assets/blog') . $path, '/');
+                return $before . MarkdownBlog::normalizePath($newPath) . ')';
+            } else {
+                // Path relative to the post
+                $newPath = $this->publicPath($path);
+                // dd('/' . $before . $newPath . ')');
+                return $before . MarkdownBlog::normalizePath($newPath) . ')';
+            }
+        }, $content);
+
+        // HTML images
+        $content = preg_replace_callback('/(<img.*?)src="(.*?)"(.*?>)/i', function ($matches) {
+            $before = $matches[1];
+            $path = $matches[2];
+            $after = $matches[3];
+            if (Str::startsWith($path, '/') && !Str::startsWith($path, '//')) {
+                // Path relative to the repository root
+                $newPath = Str::start(config('mdblog.public.path', 'assets/blog') . $path, '/');
+                return $before . 'src="' . MarkdownBlog::normalizePath($newPath) . '"' . $after;
+            } else {
+                // Path relative to the post
+                $newPath = $this->publicPath($path);
+                // dd('/' . $before . $newPath . ')');
+                return $before . 'src="' . MarkdownBlog::normalizePath($newPath) . '"' . $after;
+            }
+        }, $content);
+
+        return $content;
     }
 }

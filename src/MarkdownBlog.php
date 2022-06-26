@@ -5,6 +5,7 @@ namespace Aelora\MarkdownBlog;
 use Illuminate\Support\Facades\File;
 use Str;
 use Aelora\MarkdownBlog\Models\Post;
+use Illuminate\Support\Arr;
 
 class MarkdownBlog
 {
@@ -45,7 +46,10 @@ class MarkdownBlog
         return implode($separator, $sections);
     }
 
-    /** @see https://gist.github.com/AlexR1712/83e502e25300fcfeb4199b88f3bdce49 */
+    /** @see https://gist.github.com/AlexR1712/83e502e25300fcfeb4199b88f3bdce49 
+     * @deprecated Built into Laravel now
+     * 
+     */
     public function bladeCompile($value, array $args = [])
     {
         $args = array_merge($args, [
@@ -150,5 +154,45 @@ class MarkdownBlog
                 }
             }
         }
+    }
+
+    /**
+     * Fix path so that single and double dot directories are fixed and no double 
+     * directory separators. 
+     */
+    public function normalizePath($path): string
+    {
+        $ray = explode(DIRECTORY_SEPARATOR, $path);
+        $outRay = [];
+        if (empty($ray)) {
+            return '';
+        }
+
+        foreach ($ray as $piece) {
+            if ($piece === '' || $piece == '.') {
+                // Do nothing
+            } else if ($piece == '..') {
+                // Remove previous
+                array_pop($outRay);
+            } else {
+                // Just add it
+                array_push($outRay, $piece);
+            }
+        }
+
+        $newPath = implode(DIRECTORY_SEPARATOR, $outRay);
+
+        // Replace multiple separators
+        $newPath = preg_replace('#' . DIRECTORY_SEPARATOR . '{2,}#', DIRECTORY_SEPARATOR, $newPath);
+
+        // Separators at beginning or end of $path need to stay, but would have been stripped
+        if (str_starts_with($path, DIRECTORY_SEPARATOR) && !str_starts_with($newPath, DIRECTORY_SEPARATOR)) {
+            $newPath = DIRECTORY_SEPARATOR . $newPath;
+        }
+        if (str_ends_with($path, DIRECTORY_SEPARATOR) && !str_ends_with($newPath, DIRECTORY_SEPARATOR)) {
+            $newPath .= DIRECTORY_SEPARATOR;
+        }
+
+        return $newPath;
     }
 }

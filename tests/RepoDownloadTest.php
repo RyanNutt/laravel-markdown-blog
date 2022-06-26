@@ -60,14 +60,3 @@ test('Expected permalinks', function () {
         expect($p)->not->toBeNull();
     }
 });
-test('Image Replacements', function () {
-    config()->set('mdblog.repository.url', 'https://github.com/RyanNutt/laravel-markdown-testrepo');
-    Artisan::call('mdblog:download');
-
-    $p = Post::permalink('/image-tests')->first();
-    expect($p->image)->toBe(url('assets/blog/subfolder/990000.png'));
-
-    expect($p->content)->toContain(url('assets/blog/subfolder/990000.gif'));
-
-    expect($p->content)->toContain('https://via.placeholder.com/600x400/009900.png');
-});

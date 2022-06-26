@@ -346,9 +346,13 @@ class Post extends Model implements JsonSerializable
         $qry->where('tags', 'like', '%' . Str::slug($tag) . '%');
     }
 
-    public function getYearAttribute()
+    protected function year(): Attribute
     {
-        return $this->date->year;
+        return Attribute::make(
+            get: function ($value) {
+                return $this->date->year;
+            }
+        );
     }
 
     /**
@@ -420,9 +424,13 @@ class Post extends Model implements JsonSerializable
         );
     }
 
-    public function getDescriptionAttribute()
+    public function description(): Attribute
     {
-        return !empty($this->rawFrontMatter['description']) ? $this->rawFrontMatter['description'] : '';
+        return Attribute::make(
+            get: function ($value) {
+                return Arr::get($this->rawFrontMatter, 'description', '');
+            }
+        );
     }
 
     /**

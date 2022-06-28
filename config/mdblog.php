@@ -25,6 +25,9 @@ return [
 
         // Only pages with a specified tag
         'tags' => env('MDBLOG_PERMALINK_TAG', '/posts/tag/{slug}'),
+
+        // Sitemap - Set to false to disable
+        'sitemap' => env('MDBLOG_PERMALINK_SITEMAP', '/md-sitemap.xml'),
     ],
 
     'controllers' => [
@@ -33,6 +36,7 @@ return [
         'tag' => '\Aelora\MarkdownBlog\Http\Controllers\TagController@index',
         'post' => '\Aelora\MarkdownBlog\Http\Controllers\PostController@index',
         'webhook' => '\Aelora\MarkdownBlog\Http\Controllers\WebhookController@index',
+        'sitemap' => '\Aelora\MarkdownBlog\Http\Controllers\Sitemap@index',
     ],
 
     'webhook' => [

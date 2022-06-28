@@ -12,7 +12,7 @@ $post variable is the post --}}
 <body>
     <div style="margin: 0 auto; width: 65ch;">
         <h1>{{ $post->title }}</h1>
-        <p>{!! $post->rendered() !!}</p>
+        <p>{!! $post->formatted !!}</p>
     </div>
 
 </body>

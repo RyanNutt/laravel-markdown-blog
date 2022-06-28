@@ -55,27 +55,11 @@ class BuildCache extends Command
             foreach ($allFiles as $f) {
                 if (Str::endsWith(Str::lower($f->getFilename()), ['.md', '.markdown', '.html', '.htm'])) {
                     $post = Post::fromFile($f->getPathname());
-                    $relativePath = $f->getRelativePath();
-                    $post->content = preg_replace_callback('/!\[.*?\]\((.*?)\)/', function ($match) use ($relativePath) {
-                        $toReplace = $match[0];
-                        $imagePath = $match[1];
-                        if (preg_match('/^https?:\/\//', $imagePath) || Str::startsWith($imagePath, '//') || Str::startsWith($imagePath, 'data:')) {
-                            // Absolute URL, don't do anything
-                            return $toReplace;
-                        }
+                    $post->filepath = MarkdownBlog::normalizePath($f->getRelativePath() . '/' . $post->filename);
 
-                        $url = url(config('mdblog.public.path') . '/' . $relativePath . '/' . $imagePath);
-                        return Str::replace($match[1], $url, $match[0]);
-                    }, $post->content);
+                    // Relative to repo root, without leading slash
+                    $post->filepath = preg_replace('#^' . DIRECTORY_SEPARATOR . '{1}#', '', $post->filepath);
 
-                    $featuredImage = $post->image;
-                    // dump($post->permalink, $post->front_matter['image']);
-                    if (empty($featuredImage) || preg_match('/^https?:\/\//', $featuredImage) || Str::startsWith($featuredImage, '//') || Str::startsWith($featuredImage, 'data:')) {
-                        // Don't have to do anything, but easier to catch this an do 
-                        // nothing that worry about it on the next step
-                    } else {
-                        $post->image = url(config('mdblog.public.path') . '/' . $relativePath . '/' . $featuredImage);
-                    }
                     $post->save();
                 }
                 if (Str::endsWith(Str::lower($f->getFilename()), $allowedExtensions)) {

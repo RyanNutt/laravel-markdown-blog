@@ -27,7 +27,6 @@ class Tag extends Model
     public function getRows()
     {
         return Cache::store(MarkdownBlog::cacheStore())->rememberForever('mdblog.tags', function () {
-            $allFiles = File::allFiles(storage_path('mdblog'));
             $tags = [];
             $done = [];
             foreach (Post::all() as $post) {

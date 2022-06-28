@@ -11,6 +11,11 @@ Route::get(config('mdblog.permalinks.categories'), config('mdblog.controllers.ca
 Route::get(config('mdblog.permalinks.tags'), config('mdblog.controllers.tag'))
     ->name('mdblog.tag');
 
+if (config('mdblog.permalinks.sitemap', '/md-sitemap.xml') != false) {
+    Route::get(config('mdblog.permalinks.sitemap', '/md-sitemap.xml'), config('mdblog.controllers.sitemap'))
+        ->name('mdblog.sitemap');
+}
+
 // Add all permalinks as routes
 try {
     // In case the database table doesn't exist, there wouldn't be 

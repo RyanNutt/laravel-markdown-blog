@@ -26,6 +26,7 @@ class Post extends Model implements JsonSerializable
         'categories' => 'array',
         'post' => 'boolean',
         'front_matter' => 'array',
+        'publish_date' => 'datetime',
     ];
 
     protected $table = 'mdblog';
@@ -108,6 +109,7 @@ class Post extends Model implements JsonSerializable
         $obj->parent_id = 0; // Will get filled in later after filling table
 
         $obj->content = $o->body();
+
         return $obj;
     }
 
@@ -339,12 +341,12 @@ class Post extends Model implements JsonSerializable
      */
     public function scopeCategory($qry, $cat)
     {
-        $qry->where('categories', 'like', '%' . Str::slug($cat) . '%');
+        $qry->where('categories', 'like', '%"' . Str::slug($cat) . '"%');
     }
 
     public function scopeTag($qry, $tag)
     {
-        $qry->where('tags', 'like', '%' . Str::slug($tag) . '%');
+        $qry->where('tags', 'like', '%"' . Str::slug($tag) . '"%');
     }
 
     protected function year(): Attribute
@@ -387,6 +389,15 @@ class Post extends Model implements JsonSerializable
     {
         return Attribute::make(
             get: function ($value) {
+                if (!config('mdblog.render.raw', false) && !$this->hasFrontMatter('raw')) {
+                    if (config('mdblog.render.markdown', true) && !$this->hasFrontMatter('markdown')) {
+                        $parsedown = new \Parsedown();
+                        $value = $parsedown->text($value);
+                    }
+                    if (config('mdblog.render.blade', true) && !$this->hasFrontMatter('noblade')) {
+                        $value = Blade::render($value, ['post' => $this]);
+                    }
+                }
                 // Markdown images
                 $value = preg_replace_callback('/(!\[.*?\]\()(.+?)\)/', function ($matches) {
                     $before = $matches[1];
@@ -408,6 +419,9 @@ class Post extends Model implements JsonSerializable
                     $before = $matches[1];
                     $path = $matches[2];
                     $after = $matches[3];
+                    if (preg_match('/^https?:\/\//i', $path)) {
+                        return $matches[0];
+                    }
                     if (Str::startsWith($path, '/') && !Str::startsWith($path, '//')) {
                         // Path relative to the repository root
                         $newPath = Str::start(config('mdblog.public.path', 'assets/blog') . $path, '/');
@@ -419,21 +433,9 @@ class Post extends Model implements JsonSerializable
                         return $before . 'src="' . MarkdownBlog::normalizePath($newPath) . '"' . $after;
                     }
                 }, $value);
-
-                if (config('mdblog.render.raw', false) || $this->hasFrontMatter('raw')) {
-                    return $value;
-                }
-
-                if (config('mdblog.render.markdown', true) && !$this->hasFrontMatter('markdown')) {
-                    $parsedown = new \Parsedown();
-                    $value = $parsedown->text($value);
-                }
-
-                if (config('mdblog.render.blade', true) && !$this->hasFrontMatter('noblade')) {
-                    $value = Blade::render($value, [
-                        'post' => $this,
-                    ]);
-                }
+                return $value;
+            },
+            set: function ($value) {
                 return $value;
             }
         );

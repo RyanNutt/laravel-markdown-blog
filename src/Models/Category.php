@@ -27,7 +27,6 @@ class Category extends Model
     public function getRows()
     {
         return Cache::store(MarkdownBlog::cacheStore())->rememberForever('mdblog.categories', function () {
-            $allFiles = File::allFiles(storage_path('mdblog'));
             $cats = [];
             $done = [];
             foreach (Post::all() as $post) {

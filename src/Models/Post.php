@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
 use JsonSerializable;
+use Nette\NotImplementedException;
 use Spatie\YamlFrontMatter\YamlFrontMatter;
 use Str;
 use Symfony\Component\Yaml\Yaml;
@@ -349,6 +350,15 @@ class Post extends Model implements JsonSerializable
         $qry->where('tags', 'like', '%"' . Str::slug($tag) . '"%');
     }
 
+    public function scopePostOrderDesc($qry)
+    {
+        $qry->orderBy('sort_order', 'desc');
+    }
+    public function scopePostOrderAsc($qry)
+    {
+        $qry->orderBy('sort_order', 'asc');
+    }
+
     protected function year(): Attribute
     {
         return Attribute::make(
@@ -445,7 +455,7 @@ class Post extends Model implements JsonSerializable
     {
         return Attribute::make(
             get: function ($value) {
-                return Arr::get($this->rawFrontMatter, 'description', '');
+                return $this->getFrontMatter('description', '');
             }
         );
     }
@@ -522,7 +532,6 @@ class Post extends Model implements JsonSerializable
         $children = collect();
         foreach ($this->children as $childPermalink) {
             $child = Post::permalink($childPermalink)->first();
-            dump($child);
             if (!empty($child)) {
                 $children->push($child);
             }
@@ -532,6 +541,16 @@ class Post extends Model implements JsonSerializable
 
     public function nextPost(): ?Post
     {
+        if ($this->type == 'post') {
+            // Next published type==post by date, or null if there isn't one
+            $fixedDate = $this->publish_date->timestamp + ($this->id / 1000);
+            return Post::posts()
+                ->published()
+                ->where('sort_order', '>', $this->sort_order)
+                ->postOrderAsc()
+                ->first();
+        }
+        throw new NotImplementedException('Next post non-"post" not implemented');
         return null;
     }
 
@@ -547,6 +566,14 @@ class Post extends Model implements JsonSerializable
 
     public function previousPost(): ?Post
     {
+        if ($this->type == 'post') {
+            $fixedDate = $this->publish_date->timestamp + ($this->id / 1000);
+            return Post::posts()
+                ->where('sort_order', '<', $this->sort_order)
+                ->postOrderDesc()
+                ->first();
+        }
+        throw new NotImplementedException('Previous post non-"post" not implemented');
         return null;
     }
 
@@ -660,5 +687,10 @@ class Post extends Model implements JsonSerializable
             return !empty($this->front_matter);
         }
         return Arr::get($this->front_matter, $key, null) !== null;
+    }
+
+    public function getFrontMatter($key, $default = false)
+    {
+        return Arr::get($this->front_matter, $key, $default);
     }
 }

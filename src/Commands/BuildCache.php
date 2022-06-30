@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Storage;
 use Str;
 use Symfony\Component\Yaml\Yaml;
 use Illuminate\Support\Arr;
-
+use Illuminate\Support\Facades\DB;
 
 class BuildCache extends Command
 {
@@ -70,6 +70,18 @@ class BuildCache extends Command
                     }
                     copy($f->getPathname(), $publicPath . '/' . $f->getRelativePathname());
                 }
+            }
+        }
+
+        // Need unique date/time for each post, at least separate seconds so sorting works okay
+        if (config('mdblog.fix_date', true)) {
+            // This is potentially a long process that might not be needed for everybody, so there
+            // should be a way to opt out. 
+            $sortOrder = 1;
+            $ps = Post::posts()->orderBy('publish_date')->orderBy('filepath')->get();
+            foreach ($ps as $p) {
+                $p->sort_order = $sortOrder++;
+                $p->save();
             }
         }
 

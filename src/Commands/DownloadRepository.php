@@ -2,12 +2,13 @@
 
 namespace Aelora\MarkdownBlog\Commands;
 
+use Aelora\MarkdownBlog\Events\RepositoryDownloaded;
 use Illuminate\Console\Command;
-use Str;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
+use Str;
 
 class DownloadRepository extends Command
 {
@@ -81,6 +82,8 @@ class DownloadRepository extends Command
         $this->line('Downloaded ' . number_format($cnt) . ' files');
         $za->close();
         $storage->delete(storage_path('mdblog/.gitdownload.zip'));
+
+        event(new RepositoryDownloaded());
 
         $this->line('Rebuilding Cache');
         Artisan::call('mdblog:cache');

@@ -90,6 +90,8 @@ class BuildCache extends Command
         \Aelora\MarkdownBlog\Models\Category::first();
         \Aelora\MarkdownBlog\Models\Tag::first();
 
+        event(new \Aelora\MarkdownBlog\Events\CacheUpdated());
+
         return self::SUCCESS;
     }
 }

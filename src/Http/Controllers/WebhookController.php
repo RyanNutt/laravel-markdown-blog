@@ -12,6 +12,9 @@ class WebhookController extends Controller
 
     public function index(Request $request)
     {
+        if (!config('mdblog.webhook.key', false)) {
+            die('Webhook key not set');
+        }
         $sig_check = 'sha1=' . hash_hmac('sha1', request()->getContent(), config('mdblog.webhook.key'));
 
         if (hash_equals($sig_check, request()->header('x-hub-signature'))) {

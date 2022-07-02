@@ -40,7 +40,7 @@ return [
     ],
 
     'webhook' => [
-        'key' => env('MDBLOG_WEBHOOK_KEY', 'change_this_to_something_secure'),
+        'key' => env('MDBLOG_WEBHOOK_KEY'),
         'route' => env('MDBLOG_WEBHOOK_ROUTE', '/mdblogwebhook'),
     ],
 

@@ -7,9 +7,3 @@ use Aelora\MarkdownBlog\Models\Tag;
 use Aelora\MarkdownBlog\Facades\MarkdownBlog;
 use Aelora\MarkdownBlog\Models\Post;
 use Illuminate\Support\Facades\DB;
-
-test('x', function () {
-    MarkdownBlog::buildCache(__DIR__ . '/fixtures');
-    $p = Post::category('category-1')->get();
-    dump($p);
-});

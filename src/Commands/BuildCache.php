@@ -54,12 +54,7 @@ class BuildCache extends Command
         if (!empty($allFiles)) {
             foreach ($allFiles as $f) {
                 if (Str::endsWith(Str::lower($f->getFilename()), ['.md', '.markdown', '.html', '.htm'])) {
-                    $post = Post::fromFile($f->getPathname());
-                    $post->filepath = MarkdownBlog::normalizePath($f->getRelativePath() . '/' . $post->filename);
-
-                    // Relative to repo root, without leading slash
-                    $post->filepath = preg_replace('#^' . DIRECTORY_SEPARATOR . '{1}#', '', $post->filepath);
-
+                    $post = Post::fromFile($f);
                     $post->save();
                 }
                 if (Str::endsWith(Str::lower($f->getFilename()), $allowedExtensions)) {

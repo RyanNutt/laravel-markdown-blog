@@ -66,6 +66,12 @@ class DownloadRepository extends Command
 
         $za->open(storage_path('mdblog/.gitdownload.zip'));
 
+        if ($za->numFiles <= 0) {
+            $this->line('Zip file is empty');
+            $storage->delete(storage_path('mdblog/.gitdownload.zip'));
+            return self::SUCCESS;
+        }
+
         $this->line('Unzipping files');
         $cnt = 0;
         for ($i = 0; $i < $za->numFiles; $i++) {

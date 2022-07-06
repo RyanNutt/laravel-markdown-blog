@@ -16,6 +16,7 @@ use JsonSerializable;
 use Nette\NotImplementedException;
 use Spatie\YamlFrontMatter\YamlFrontMatter;
 use Str;
+use Symfony\Component\Finder\SplFileInfo;
 use Symfony\Component\Yaml\Yaml;
 
 class Post extends Model implements JsonSerializable
@@ -37,11 +38,17 @@ class Post extends Model implements JsonSerializable
     /**
      * Load the model from a markdown file
      */
-    public static function fromFile(string $file): self
+    public static function fromFile(string|SplFileInfo $file): self
     {
-        throw_if(!file_exists($file), new \Exception('File does not exist'));
+        if (!$file instanceof SplFileInfo) {
+            // Need it as a SplFileInfo, but the relative paths are going to be to root
+            // if it's done this way. 
+            $file = new SplFileInfo($file, dirname($file), $file);
+        }
 
-        $o = YamlFrontMatter::parse(file_get_contents($file));
+        throw_if(!file_exists($file->getRealPath()), new \Exception('File does not exist'));
+
+        $o = YamlFrontMatter::parse($file->getContents());
         $obj = new self();
         $obj->title = $o->title;
         $obj->frontMatter = $o->matter();
@@ -62,7 +69,7 @@ class Post extends Model implements JsonSerializable
         $obj->filename = basename($file);
         $obj->name = pathinfo($file, PATHINFO_FILENAME);
 
-        $obj->filepath = $file;
+        $obj->filepath = $file->getRelativePathName();
 
         if ($o->matter('date') != '') {
             $obj->publish_date = Carbon::parse($o->date);
@@ -82,8 +89,7 @@ class Post extends Model implements JsonSerializable
             $obj->permalink = $o->permalink;
         } else {
             // Path relative to mdblog root and filename without date and without extension
-            $obj->permalink = MarkdownBlog::cleanPath(Str::contains($file, '/') ? Str::beforeLast($file, '/') . '/' . $obj->name : $obj->name);
-            $obj->permalink = preg_replace('#^' . storage_path('mdblog') . '#', '', $obj->permalink);
+            $obj->permalink = preg_replace('#^/#', '', MarkdownBlog::normalizePath($file->getRelativePath() . '/' . $obj->name));
         }
 
         // Needs to be relative to root

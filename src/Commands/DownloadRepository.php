@@ -68,25 +68,24 @@ class DownloadRepository extends Command
 
         if ($za->numFiles <= 0) {
             $this->line('Zip file is empty');
-            $storage->delete(storage_path('mdblog/.gitdownload.zip'));
-            return self::SUCCESS;
-        }
+        } else {
 
-        $this->line('Unzipping files');
-        $cnt = 0;
-        for ($i = 0; $i < $za->numFiles; $i++) {
-            $stat = $za->statIndex($i);
-            if ($stat['size'] > 0) {
-                // Can't write directories, it'll be taken care of by the file
-                $this->line('... ' . Str::after($stat['name'], '/'));
-                $fullPath = storage_path('mdblog/') . Str::after($stat['name'], '/');
-                $contents = $za->getFromIndex($i);
-                $storage->put($fullPath, $contents);
-                $cnt++;
+            $this->line('Unzipping files');
+            $cnt = 0;
+            for ($i = 0; $i < $za->numFiles; $i++) {
+                $stat = $za->statIndex($i);
+                if ($stat['size'] > 0) {
+                    // Can't write directories, it'll be taken care of by the file
+                    $this->line('... ' . Str::after($stat['name'], '/'));
+                    $fullPath = storage_path('mdblog/') . Str::after($stat['name'], '/');
+                    $contents = $za->getFromIndex($i);
+                    $storage->put($fullPath, $contents);
+                    $cnt++;
+                }
             }
+            $this->line('Downloaded ' . number_format($cnt) . ' files');
+            $za->close();
         }
-        $this->line('Downloaded ' . number_format($cnt) . ' files');
-        $za->close();
         $storage->delete(storage_path('mdblog/.gitdownload.zip'));
 
         event(new RepositoryDownloaded());

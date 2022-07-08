@@ -97,7 +97,6 @@ class Post extends Model implements JsonSerializable
 
         // Remove trailing slash, even if it's explicitly defined
         $obj->permalink = preg_replace('#/{1}$#', '', $obj->permalink);
-        dump($o->matter());
         $obj->type = Str::lower($o->matter('type', 'post'));
 
         // High default so can sneak in before or after without defining for all posts

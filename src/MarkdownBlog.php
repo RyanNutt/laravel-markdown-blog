@@ -195,4 +195,77 @@ class MarkdownBlog
 
         return $newPath;
     }
+
+    public function isTruthy($value): bool
+    {
+        if (is_string($value)) {
+            return $value !== '' && $value !== '0' && strtolower($value) !== 'false' && strtolower($value) !== 'f';
+        } else if ($value === 0 || $value === 0.0) {
+            return false;
+        } else if (is_bool($value)) {
+            return $value;
+        } else if (is_array($value)) {
+            return !empty($value);
+        } else if (is_object($value)) {
+            return !empty($value);
+        } else {
+            return false;
+        }
+    }
+
+    public function link(string $permalink, bool $exact = false, string $type = ''): string
+    {
+        $p = Post::published();
+        if ($exact) {
+            $p = $p->where('permalink', $permalink);
+        } else {
+            $p = $p->where('permalink', 'like', '%' .  $permalink . '%');
+        }
+
+        if (!empty($type)) {
+            $p = $p->where('type', $type);
+        }
+        $p = $p->first();
+
+        if (empty($p)) {
+            return '#not-found';
+        }
+        return url($p->permalink);
+    }
+
+    public function linkFile(string $file, bool $exact = false, string $type = ''): string
+    {
+        $p = Post::published();
+        if ($exact) {
+            $p = $p->where('filename', $file);
+        } else {
+            $p = $p->where('filename', 'like', '%' .  $file . '%');
+        }
+        if (!empty($type)) {
+            $p = $p->where('type', $type);
+        }
+        $p = $p->first();
+        if (empty($p)) {
+            return '#not-found';
+        }
+        return url($p->permalink);
+    }
+
+    public function linkTitle(string $title, bool $exact = false, string $type = ''): string
+    {
+        $p = Post::published();
+        if ($exact) {
+            $p = $p->where('title', $title);
+        } else {
+            $p = $p->where('title', 'like', '%' .  $title . '%');
+        }
+        if (!empty($type)) {
+            $p = $p->where('type', $type);
+        }
+        $p = $p->first();
+        if (empty($p)) {
+            return '#not-found';
+        }
+        return url($p->permalink);
+    }
 }

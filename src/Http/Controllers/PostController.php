@@ -16,6 +16,11 @@ class PostController extends Controller
         $post = Post::current();
         abort_if(empty($post), 404);
 
+        if ($post->hasFrontMatter('noview')) {
+            header('Content-type: ' . $post->getFrontMatter('content-type', 'text/plain'));
+            die($post->content);
+        }
+
         return view('markdown-blog::post', [
             'post' => $post,
         ]);

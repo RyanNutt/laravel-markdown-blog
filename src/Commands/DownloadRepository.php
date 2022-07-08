@@ -41,6 +41,8 @@ class DownloadRepository extends Command
             throw new \Exception('Only GitHub is currently supported');
         }
 
+        event(new \Aelora\MarkdownBlog\Events\DownloadStart());
+
         $headers = [];
         if (!empty(config('mdblog.repository.key'))) {
             $headers['Authorization'] = 'token ' . config('mdblog.repository.key');

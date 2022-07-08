@@ -97,7 +97,7 @@ class Post extends Model implements JsonSerializable
 
         // Remove trailing slash, even if it's explicitly defined
         $obj->permalink = preg_replace('#/{1}$#', '', $obj->permalink);
-
+        dump($o->matter());
         $obj->type = Str::lower($o->matter('type', 'post'));
 
         // High default so can sneak in before or after without defining for all posts
@@ -370,6 +370,32 @@ class Post extends Model implements JsonSerializable
         return Attribute::make(
             get: function ($value) {
                 return $this->date->year;
+            }
+        );
+    }
+
+    protected function sitemapFrequency(): Attribute
+    {
+        return Attribute::make(
+            get: function ($value) {
+                $frequencies = (array)config('mdblog.sitemap.frequency', []);
+                if (array_key_exists($this->type, $frequencies)) {
+                    return $frequencies[$this->type];
+                }
+                return array_key_exists('default', $frequencies) ? $frequencies['default'] : 'monthly';
+            }
+        );
+    }
+
+    protected function sitemapPriority(): Attribute
+    {
+        return Attribute::make(
+            get: function ($value) {
+                $priorities = (array)config('mdblog.sitemap.priority', []);
+                if (array_key_exists($this->type, $priorities)) {
+                    return $priorities[$this->type];
+                }
+                return array_key_exists('default', $priorities) ? $priorities['default'] : '0.5';
             }
         );
     }

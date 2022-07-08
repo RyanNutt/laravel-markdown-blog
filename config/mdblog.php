@@ -14,6 +14,11 @@ return [
 
         // API Key to access repository. Only strictly needed if the repo is not public.
         'key' => env('MDBLOG_KEY', ''),
+
+        // If true, files named readme.md will not be included in the import. This will 
+        // let you use readme.md files for documentation for your blog without it getting
+        // imported to your live site. 
+        'ignore_readme' => env('MDBLOG_IGNORE_README', true),
     ],
 
     'permalinks' => [
@@ -75,7 +80,8 @@ return [
     ],
 
     /**
-     * Options for how posts are rendered
+     * Options for how posts are rendered. These can also be set in front matter for 
+     * individual posts. 
      */
     'render' => [
         // Whether posts are rendered using the blade engine before output
@@ -88,4 +94,26 @@ return [
         // and .html in this config set. 
         'raw' => env('MDBLOG_RENDER_RAW', false),
     ],
+
+    // Options for the xml sitemap
+    'sitemap' => [
+        'enabled' => env('MDBLOG_SITEMAP', true),
+
+        // List of post types that should be excluded from the sitemap. Should
+        // be all lower cased.
+        'exclude' => [],
+
+        'priority' => [
+            'default' => 0.5,
+            // 'product' => 0.75,
+            // 'review' => 0.25,
+        ],
+
+        'frequency' => [
+            'default' => 'weekly',
+            // 'product' => 'daily',
+            // 'review' => 'monthly',
+        ],
+
+    ]
 ];

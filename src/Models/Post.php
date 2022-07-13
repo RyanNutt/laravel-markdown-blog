@@ -13,6 +13,8 @@ use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
 use JsonSerializable;
+use League\CommonMark\CommonMarkConverter;
+use League\CommonMark\GithubFlavoredMarkdownConverter;
 use Nette\NotImplementedException;
 use Spatie\YamlFrontMatter\YamlFrontMatter;
 use Str;
@@ -432,8 +434,12 @@ class Post extends Model implements JsonSerializable
             get: function ($value) {
                 if (!config('mdblog.render.raw', false) && !$this->hasFrontMatter('raw')) {
                     if (config('mdblog.render.markdown', true) && !$this->hasFrontMatter('markdown')) {
-                        $parsedown = new \Parsedown();
-                        $value = $parsedown->text($value);
+                        $converter = new CommonMarkConverter();
+                        // $converter = new GithubFlavoredMarkdownConverter([
+                        //     'allow_unsafe_links' => true,
+                        //     'html_input' => 'allow',
+                        // ]);
+                        $value = $converter->convert($value)->__toString();
                     }
                     if (config('mdblog.render.blade', true) && !$this->hasFrontMatter('noblade')) {
                         $value = Blade::render($value, ['post' => $this]);

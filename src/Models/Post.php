@@ -435,10 +435,6 @@ class Post extends Model implements JsonSerializable
                 if (!config('mdblog.render.raw', false) && !$this->hasFrontMatter('raw')) {
                     if (config('mdblog.render.markdown', true) && !$this->hasFrontMatter('markdown')) {
                         $converter = new CommonMarkConverter();
-                        // $converter = new GithubFlavoredMarkdownConverter([
-                        //     'allow_unsafe_links' => true,
-                        //     'html_input' => 'allow',
-                        // ]);
                         $value = $converter->convert($value)->__toString();
                     }
                     if (config('mdblog.render.blade', true) && !$this->hasFrontMatter('noblade')) {

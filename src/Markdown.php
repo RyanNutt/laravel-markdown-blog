@@ -32,9 +32,6 @@ class Markdown
      */
     public function convert(string $markdown): string
     {
-        // $converter = $this->converter();
-        // ray($converter);
-        // return '';
         return $this->converter()->convert($markdown);
     }
 
@@ -49,13 +46,6 @@ class Markdown
 
         $extensions = [];
         $extensions[] = new CommonMarkCoreExtension();
-
-        // unset($config['gfm']);
-        // unset($config['attributes']);
-        // unset($config['autolink']);
-        // unset($config['descriptionList']);
-        // unset($config['disallowedRawHtml']);
-        // unset($config['strikethrough']);
 
         if (Arr::get($config, 'gfm', false)) {
             $extensions[] = new GithubFlavoredMarkdownExtension();

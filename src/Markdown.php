@@ -107,10 +107,11 @@ class Markdown
             Arr::forget($config, 'smartpunct');
         }
 
-        if (is_array(Arr::get($config, 'table_of_contents', false))) {
+        // table_of_contents requires heading_permalink to be enabled as well
+        if (array_key_exists('heading_permalink', $config) && is_array(Arr::get($config, 'table_of_contents', false))) {
             $extensions[] = new TableOfContentsExtension();
         } else {
-            Arr::forget($config, 'table');
+            Arr::forget($config, 'table_of_contents');
         }
 
         if (is_array(Arr::get($config, 'table', false))) {
@@ -118,12 +119,10 @@ class Markdown
         } else {
             Arr::forget($config, 'table');
         }
-
         $env = new Environment($config);
         foreach ($extensions as $ext) {
             $env->addExtension($ext);
         }
-
         return new MarkdownConverter($env);
     }
 

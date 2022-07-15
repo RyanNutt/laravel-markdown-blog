@@ -10,6 +10,10 @@ use Illuminate\Support\Arr;
 class MarkdownBlog
 {
 
+    const SEARCH_FILENAME = 1;
+    const SEARCH_PERMALINK = 2;
+    const SEARCH_TITLE = 3;
+
     /**
      * Returns the name of the cache store to use for the scanned posts
      */
@@ -267,5 +271,39 @@ class MarkdownBlog
             return '#not-found';
         }
         return url($p->permalink);
+    }
+
+    /**
+     * Search through markdown posts and find the first matching post. This may not be the best match, 
+     * only the first found. 
+     * 
+     * This only searches published posts.
+     * 
+     * @param string    $search Criteria to search for
+     * @param string    $type   Type of post to search for. Blank will search for all types.
+     * @param bool      $exact  Whether to search for exact match or use LIKE %search%
+     * @param string    $field  Which field to search. See SEARCH_x constants in this class
+     */
+    public function findPost(string $search, string $type = 'post', bool $exact = false, int $field = self::SEARCH_FILENAME): ?Post
+    {
+        $fieldName = 'filepath';  // defaults to SEARCH_FILENAME
+        if ($field == self::SEARCH_PERMALINK) {
+            $fieldName = 'permalink';
+        } else if ($field == self::SEARCH_TITLE) {
+            $fieldName = 'title';
+        }
+
+        $p = Post::published();
+        if (!empty($type)) {
+            $p = $p->where('type', $type);
+        }
+
+        if ($exact) {
+            $p = $p->where($fieldName, $search);
+        } else {
+            $p = $p->where($fieldName, 'like', '%' .  $search . '%');
+        }
+        $p = $p->first();
+        return $p;
     }
 }

@@ -2,6 +2,7 @@
 
 namespace Aelora\MarkdownBlog\Models;
 
+use Aelora\MarkdownBlog\Facades\Markdown;
 use Aelora\MarkdownBlog\Facades\MarkdownBlog;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
@@ -434,8 +435,7 @@ class Post extends Model implements JsonSerializable
             get: function ($value) {
                 if (!config('mdblog.render.raw', false) && !$this->hasFrontMatter('raw')) {
                     if (config('mdblog.render.markdown', true) && !$this->hasFrontMatter('markdown')) {
-                        $converter = new CommonMarkConverter();
-                        $value = $converter->convert($value)->__toString();
+                        $value = Markdown::convert($value);
                     }
                     if (config('mdblog.render.blade', true) && !$this->hasFrontMatter('noblade')) {
                         $value = Blade::render($value, ['post' => $this]);

@@ -95,6 +95,106 @@ return [
         'raw' => env('MDBLOG_RENDER_RAW', false),
     ],
 
+    // Options for how markdown is rendered and what settings CommonMark will use.
+    // Setting any of the individual extension sets to false will disable that 
+    // extension. 
+    // 
+    // See: https://commonmark.thephpleague.com/2.3/extensions/overview/ for information
+    // about individual options. 
+    'markdown' => [
+        // GitHub Flavored Markdown. This enables several other extensions and is disabled
+        // by default
+        // See: https://commonmark.thephpleague.com/2.3/extensions/gfm/
+        'gfm' => true, // true or false, no config options
+
+        // Attributes extension. No config options, so either true or false.
+        // See: https://commonmark.thephpleague.com/2.3/extensions/attributes/
+        'attributes' => true,
+
+        // See: https://commonmark.thephpleague.com/2.3/extensions/autolinks/
+        'autolink' => true,
+
+        // See: https://commonmark.thephpleague.com/2.3/extensions/description-lists/
+        'description_list' => true,
+
+        // See: https://commonmark.thephpleague.com/2.3/extensions/strikethrough/
+        'strikethrough' => false,
+
+        // Set to false to disable extension and allow all HTML tags.
+        // See: https://commonmark.thephpleague.com/2.3/extensions/disallowed-raw-html/
+        'disallowed_raw_html' => [
+            'disallowed_tags' => ['title', 'textarea', 'style', 'xml', 'iframe', 'noembed', 'noframes', 'script', 'plaintext'],
+        ],
+
+        // See: https://commonmark.thephpleague.com/2.3/extensions/external-links/
+        'external_link' => [
+            'internal_hosts' => parse_url(env('APP_URL', 'localhost'), PHP_URL_HOST),
+            'open_in_new_window' => false,
+            'html_class' => 'external-link',
+            'nofollow' => '',
+            'noopener' => 'external',
+            'noreferrer' => 'external',
+        ],
+
+        // See: https://commonmark.thephpleague.com/2.3/extensions/footnotes/
+        'footnote' => [
+            'backref_class'      => 'footnote-backref',
+            'backref_symbol'     => '↵',  // carriage return
+            'container_add_hr'   => true,
+            'container_class'    => 'footnotes',
+            'ref_class'          => 'footnote-ref',
+            'ref_id_prefix'      => 'fnref:',
+            'footnote_class'     => 'footnote',
+            'footnote_id_prefix' => 'fn:',
+        ],
+
+        // See: https://commonmark.thephpleague.com/2.3/extensions/heading-permalinks/
+        // This must be enabled for the TOC extension to work
+        'heading_permalink' => [
+            'html_class' => 'heading-permalink',
+            'id_prefix' => 'content',
+            'fragment_prefix' => 'content',
+            'insert' => 'before',
+            'min_heading_level' => 1,
+            'max_heading_level' => 6,
+            'title' => 'Permalink',
+            'symbol' => '¶', // paragraph symbol
+            'aria_hidden' => true,
+        ],
+
+        // Mentions extension. Read the documentation on the CommonMark website to see
+        // how this one works. It's defaulting to an empty array, which essentially 
+        // disables the extension.
+        // See: https://commonmark.thephpleague.com/2.3/extensions/mentions/
+        'mentions' => false,
+
+        // See: https://commonmark.thephpleague.com/2.3/extensions/smart-punctuation/
+        // This is disabled by default because we assume most people aren't going to
+        // want this on their website. 
+        'smartpunct' => false,
+
+        // See: https://commonmark.thephpleague.com/2.3/extensions/table-of-contents/
+        'table_of_contents' => [
+            'html_class' => 'mdblog-toc',
+            'position' => 'placeholder',
+            'style' => 'bullet',
+            'min_heading_level' => 1,
+            'max_heading_level' => 6,
+            'normalize' => 'relative',
+            'placeholder' => '[toc]',
+        ],
+
+        // See: https://commonmark.thephpleague.com/2.3/extensions/tables/
+        'table' => [
+            'wrap' => [
+                'enabled' => false,
+                'tag' => 'div',
+                'attributes' => [],
+            ],
+        ],
+
+    ],
+
     // Options for the xml sitemap
     'sitemap' => [
         'enabled' => env('MDBLOG_SITEMAP', true),

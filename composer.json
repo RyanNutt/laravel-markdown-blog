@@ -61,7 +61,8 @@
                 "Aelora\\MarkdownBlog\\MarkdownBlogServiceProvider"
             ],
             "aliases": {
-                "MarkdownBlog": "Aelora\\MarkdownBlog\\Facades\\MarkdownBlog"
+                "MarkdownBlog": "Aelora\\MarkdownBlog\\Facades\\MarkdownBlog",
+                "Markdown": "Aelora\\MarkdownBlog\\Facades\\Markdown"
             }
         }
     },

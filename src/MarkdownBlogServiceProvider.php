@@ -2,6 +2,8 @@
 
 namespace Aelora\MarkdownBlog;
 
+use Aelora\MarkdownBlog\Facades\MarkdownBlog;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Str;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
@@ -30,5 +32,13 @@ class MarkdownBlogServiceProvider extends PackageServiceProvider
     public function boot()
     {
         parent::boot();
+
+        Blade::directive('mdpermalink', function (string $search, string $type = 'post', bool $exact = false, int $field = MarkdownBlog::SEARCH_FILENAME) {
+            $p = MarkdownBlog::findPost($search, $type, $exact, $field);
+            if (empty($p)) {
+                return '#';  // So it doesn't break the page
+            }
+            return url($p->permalink);
+        });
     }
 }

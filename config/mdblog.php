@@ -16,10 +16,11 @@ return [
         // API Key to access repository. Only strictly needed if the repo is not public.
         'key' => env('MDBLOG_KEY', ''),
 
-        // If true, files named readme.md will not be included in the import. This will 
+        // If true, files named readme not be included in the import. This will 
         // let you use readme.md files for documentation for your blog without it getting
-        // imported to your live site. 
-        'ignore_readme' => env('MDBLOG_IGNORE_README', true),
+        // imported to your live site. This is case insensitive and any file named readme
+        // with any extension will be ignored.  
+        'ignore_readme' => env('MDBLOG_IGNORE_README', false),
 
         // If true, the zip file downloaded will be compared to the hash of the last download,
         // and if it matches the import will not be run. 

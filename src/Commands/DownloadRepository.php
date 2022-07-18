@@ -92,6 +92,13 @@ class DownloadRepository extends Command
                 $stat = $za->statIndex($i);
                 if ($stat['size'] > 0) {
                     // Can't write directories, it'll be taken care of by the file
+                    if (config('mdblog.repository.ignore_readme', false)) {
+                        $filename = pathinfo($stat['name'], PATHINFO_FILENAME);
+                        if (strtolower($filename) == 'readme') {
+                            $this->line('... ' . Str::after($stat['name'], '/') . ' - Skipping');
+                            continue;
+                        }
+                    }
                     $this->line('... ' . Str::after($stat['name'], '/'));
                     $fullPath = storage_path('mdblog/') . Str::after($stat['name'], '/');
                     $contents = $za->getFromIndex($i);

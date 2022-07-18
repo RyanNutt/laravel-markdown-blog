@@ -6,6 +6,7 @@ use Illuminate\Routing\Controller;
 use Aelora\MarkdownBlog\Models\Post;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Cache;
 
 class WebhookController extends Controller
 {

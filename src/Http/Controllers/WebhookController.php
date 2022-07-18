@@ -18,8 +18,15 @@ class WebhookController extends Controller
         $sig_check = 'sha1=' . hash_hmac('sha1', request()->getContent(), config('mdblog.webhook.key'));
 
         if (hash_equals($sig_check, request()->header('x-hub-signature'))) {
-            Artisan::call('mdblog:download');
-            die('done');
+            // Clear cached hash so the download is "dirty"
+            Cache::forget('mdblog.repository.hash');
+
+            if (config('mdblog.webhook.download', true)) {
+                Artisan::call('mdblog:download');
+                die('updated from repository');
+            } else {
+                die('download cached hash cleared');
+            }
         } else {
             header('HTTP/1.1 403');
             die('invalid');

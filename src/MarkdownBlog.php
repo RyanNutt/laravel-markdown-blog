@@ -306,4 +306,18 @@ class MarkdownBlog
         $p = $p->first();
         return $p;
     }
+
+    /**
+     * Reads the blog.json file, if it exists, and returns the value as an array. If the 
+     * file doesn't exist this returns an empty array. 
+     */
+    public function blogJson(): array
+    {
+        $filePath = storage_path('mdblog/blog.json');
+        if (!file_exists($filePath)) {
+            return [];
+        }
+        $json = file_get_contents($filePath);
+        return json_decode($json, true);
+    }
 }

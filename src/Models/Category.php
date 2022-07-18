@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\File;
 use Spatie\YamlFrontMatter\YamlFrontMatter;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
+use Illuminate\Support\Arr;
 
 class Category extends Model
 {
@@ -22,6 +23,7 @@ class Category extends Model
         'id' => 'string',
         'name' => 'string',
         'slug' => 'string',
+        'meta' => 'string',
     ];
 
     public function getRows()
@@ -41,6 +43,7 @@ class Category extends Model
                                     'id' => $slug,
                                     'name' => $cat,
                                     'slug' => $slug,
+                                    'meta' => json_encode(Arr::get(MarkdownBlog::blogJson(), 'categories.' . $slug, [])),
                                 ];
                                 $done[] = $slug;
                             }
@@ -48,7 +51,6 @@ class Category extends Model
                     }
                 }
             }
-
             return $cats;
         });
     }
@@ -65,5 +67,11 @@ class Category extends Model
     public function url(): string
     {
         return url(preg_replace('/{(.+?)}/', $this->slug, config('mdblog.permalinks.categories')));
+    }
+
+    public function meta(string $field, $default = null)
+    {
+        $meta = json_decode($this->meta, true);
+        return Arr::get($meta, $field, $default);
     }
 }

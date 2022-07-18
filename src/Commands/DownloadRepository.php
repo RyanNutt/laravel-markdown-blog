@@ -5,6 +5,7 @@ namespace Aelora\MarkdownBlog\Commands;
 use Aelora\MarkdownBlog\Events\RepositoryDownloaded;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
@@ -62,6 +63,19 @@ class DownloadRepository extends Command
         file_put_contents($downloadPath, $response->getBody()->__toString());
 
         $this->line('Downloaded repository ' . $repository);
+
+        if (config('mdblog.repository.check_hash', true)) {
+            $zipHash = sha1_file($downloadPath);
+            $cachedHash = Cache::get('mdblog.repository.hash', null);
+            if (!empty($cachedHash) && $zipHash === $cachedHash) {
+                $this->line('Skipping unzip, hash matches previous download');
+                $storage->delete(storage_path('mdblog/.gitdownload.zip'));
+                return self::SUCCESS;
+            } else {
+                Cache::forever('mdblog.repository.hash', $zipHash);
+                $this->line('Stored zip file hash: ' . $zipHash);
+            }
+        }
 
         // Unzip
         $za = new \ZipArchive();

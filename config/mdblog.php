@@ -19,6 +19,10 @@ return [
         // let you use readme.md files for documentation for your blog without it getting
         // imported to your live site. 
         'ignore_readme' => env('MDBLOG_IGNORE_README', true),
+
+        // If true, the zip file downloaded will be compared to the hash of the last download,
+        // and if it matches the import will not be run. 
+        'check_hash' => env('MDBLOG_CHECK_HASH', true),
     ],
 
     'permalinks' => [
@@ -47,6 +51,11 @@ return [
     'webhook' => [
         'key' => env('MDBLOG_WEBHOOK_KEY'),
         'route' => env('MDBLOG_WEBHOOK_ROUTE', '/mdblogwebhook'),
+
+        // If true, will download the zip file on a successful webhook call. If false, it will
+        // clear the cached hash (see repository.check_hash) so that the next time mdblog:download
+        // is run the zip will be uncompressed and cache rebuilt. 
+        'download' => env('MDBLOG_WEBHOOK_DOWNLOAD', true),
     ],
 
     // Number of posts shown per page on blog

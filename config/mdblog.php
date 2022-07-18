@@ -10,6 +10,7 @@ return [
         // Either github or gitlab. Ignored if the repository url is *.github.com
         // or *.gitlab.com. Used in case the domain is self hosted and is something
         // different. 
+        // @TODO - Currently only github is supported
         'type' => env('MDBLOG_TYPE', 'github'),
 
         // API Key to access repository. Only strictly needed if the repo is not public.

@@ -20,7 +20,7 @@ class CategoryController extends Controller
         $paginator = Post::posts()->category($slug)->orderBy('publish_date', 'DESC')->paginate(config('mdblog.per_page'));
         abort_if($paginator->count() <= 0, 404);
 
-        return view('markdown-blog::category', [
+        return view($cat->meta('view', 'markdown-blog::category'), [
             'posts' => $paginator,
             'category' => $cat,
         ]);
